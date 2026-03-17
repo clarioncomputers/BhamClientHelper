@@ -35,7 +35,6 @@ namespace Bham.BizTalk.Rest
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             if (string.IsNullOrWhiteSpace(_settings.ApiKeyHeaderName)) throw new ArgumentNullException(nameof(settings.ApiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(_settings.ApiKeyHeaderValue)) throw new ArgumentNullException(nameof(settings.ApiKeyHeaderValue));
-            if (string.IsNullOrWhiteSpace(_settings.CertThumbprint)) throw new ArgumentNullException(nameof(settings.CertThumbprint));
             if (_settings.TimeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(settings.TimeoutSeconds));
         }
 

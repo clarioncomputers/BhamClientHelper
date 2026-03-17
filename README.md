@@ -8,7 +8,7 @@ BizTalk 2016 helper library that adds outbound REST support for HTTP GET and HTT
 - Typed request failures via `BizTalkRestClientException`
 
 ## Target framework
-- .NET Framework 4.6 (`net46`)
+- .NET Framework 4.6.1 (`net461`)
 
 ## Project output
 - `Bham.BizTalk.Rest.dll`
@@ -29,6 +29,16 @@ dotnet build .\Bham.HelperClient.sln -c Release
 - `BizTalkRestClientSettings.Logger` accepts an `Action<BizTalkRestLogEntry>` so callers can forward start/success/failure events into BizTalk tracing, Event Log, or another sink.
 - The smoke test now writes library log events to the console automatically.
 
+## Certificate selection behavior
+- `certThumbprint` is optional on `GetJsonWithClientCertAndApiKey`, `GetXmlWithClientCertAndApiKey`, `PatchJsonWithClientCertAndApiKey`, and `PatchXmlWithClientCertAndApiKey`.
+- When a thumbprint is provided, the helper resolves and attaches that certificate from the configured store (`StoreLocation` + `StoreName`).
+- When no thumbprint is provided, the helper sends the request without a client certificate (API-key/header authentication only).
+
+## BizTalk compatibility note (.NET Framework 4.6.1)
+- The helper attaches client certificates to `HttpClientHandler` using reflection to support BizTalk projects where `ClientCertificates` is not visible at compile time due to `System.Net.Http` API-surface differences.
+- Runtime still requires a `System.Net.Http` implementation that supports client certificate attachment.
+- If runtime support is missing, the helper throws a clear `InvalidOperationException` describing the reference issue.
+
 ## BizTalk call shape examples
 Use an Expression shape or Call Rules shape to invoke the helper and store the response in orchestration string variables.
 
@@ -39,10 +49,9 @@ strGetResponse =
 		"https://api.example.com/orders?customerId=" + strCustomerId + "&status=Open",
 		"x-api-key",
 		strApiKey,
-		strCertThumbprint,
-		System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
-		System.Security.Cryptography.X509Certificates.StoreName.My,
-		100);
+		storeLocation: System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
+		storeName: System.Security.Cryptography.X509Certificates.StoreName.My,
+		timeoutSeconds: 100);
 ```
 
 GET XML example:
@@ -52,10 +61,9 @@ strGetXmlResponse =
 		"https://api.example.com/orders/" + strOrderId,
 		"x-api-key",
 		strApiKey,
-		strCertThumbprint,
-		System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
-		System.Security.Cryptography.X509Certificates.StoreName.My,
-		100);
+		storeLocation: System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
+		storeName: System.Security.Cryptography.X509Certificates.StoreName.My,
+		timeoutSeconds: 100);
 ```
 
 PATCH example:
@@ -72,10 +80,9 @@ strPatchResponse =
 		strPatchBody,
 		"x-api-key",
 		strApiKey,
-		strCertThumbprint,
-		System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
-		System.Security.Cryptography.X509Certificates.StoreName.My,
-		100);
+		storeLocation: System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
+		storeName: System.Security.Cryptography.X509Certificates.StoreName.My,
+		timeoutSeconds: 100);
 ```
 
 PATCH XML example:
@@ -92,10 +99,9 @@ strPatchXmlResponse =
 		strPatchXmlBody,
 		"x-api-key",
 		strApiKey,
-		strCertThumbprint,
-		System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
-		System.Security.Cryptography.X509Certificates.StoreName.My,
-		100);
+		storeLocation: System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
+		storeName: System.Security.Cryptography.X509Certificates.StoreName.My,
+		timeoutSeconds: 100);
 ```
 
 Typical orchestration variables:
@@ -106,7 +112,6 @@ Typical orchestration variables:
 - `strPatchXmlResponse`
 - `strPatchXmlBody`
 - `strApiKey`
-- `strCertThumbprint`
 - `strCustomerId`
 - `strOrderId`
 
@@ -142,7 +147,6 @@ var client = new BizTalkRestClient(
 	{
 		ApiKeyHeaderName = "x-api-key",
 		ApiKeyHeaderValue = "secret",
-		CertThumbprint = "thumbprint",
 		Logger = entry => Console.WriteLine(
 			$"[{entry.TimestampUtc:O}] [{entry.Level}] [{entry.Operation}] {entry.Message}")
 	});

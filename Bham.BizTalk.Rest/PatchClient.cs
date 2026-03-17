@@ -24,7 +24,7 @@ namespace Bham.BizTalk.Rest
             string url,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string certThumbprint,
+            string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100,
@@ -50,7 +50,7 @@ namespace Bham.BizTalk.Rest
             string url,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string certThumbprint,
+            string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100,
@@ -77,7 +77,7 @@ namespace Bham.BizTalk.Rest
             string jsonBody,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string certThumbprint,
+            string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100,
@@ -106,7 +106,7 @@ namespace Bham.BizTalk.Rest
             string xmlBody,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string certThumbprint,
+            string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100,
@@ -320,7 +320,6 @@ namespace Bham.BizTalk.Rest
             if (string.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
-            if (string.IsNullOrWhiteSpace(certThumbprint)) throw new ArgumentNullException(nameof(certThumbprint));
             if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
             if (method != HttpMethod.Get && string.IsNullOrWhiteSpace(contentMediaType)) throw new ArgumentNullException(nameof(contentMediaType));
             if (timeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(timeoutSeconds));
@@ -352,10 +351,13 @@ namespace Bham.BizTalk.Rest
             int timeoutSeconds,
             Action<BizTalkRestLogEntry> logger)
         {
-            var normalizedThumbprint = certThumbprint.Replace(" ", string.Empty).ToUpperInvariant();
+            var normalizedThumbprint = NormalizeThumbprint(certThumbprint);
+            var thumbprintCacheKeyToken = string.IsNullOrWhiteSpace(normalizedThumbprint)
+                ? "NOCERT"
+                : normalizedThumbprint;
             var key = string.Format(
                 "{0}|{1}|{2}|{3}",
-                normalizedThumbprint,
+                thumbprintCacheKeyToken,
                 storeLocation,
                 storeName,
                 timeoutSeconds);
@@ -385,25 +387,72 @@ namespace Bham.BizTalk.Rest
             int timeoutSeconds,
             Action<BizTalkRestLogEntry> logger)
         {
-            BizTalkRestLogging.Write(
-                logger,
-                BizTalkRestLogLevel.Debug,
-                "HttpClient",
-                null,
-                string.Format(
-                    "Creating HttpClient using certificate {0} from {1}\\{2}.",
-                    MaskThumbprint(thumbprint),
-                    storeLocation,
-                    storeName));
-
-            var cert = FindCertificateByThumbprint(thumbprint, storeLocation, storeName);
-
             var handler = new HttpClientHandler();
-            handler.ClientCertificates.Add(cert);
+            if (!string.IsNullOrWhiteSpace(thumbprint))
+            {
+                var cert = FindCertificateByThumbprint(thumbprint, storeLocation, storeName);
+
+                BizTalkRestLogging.Write(
+                    logger,
+                    BizTalkRestLogLevel.Debug,
+                    "HttpClient",
+                    null,
+                    string.Format(
+                        "Creating HttpClient using certificate {0} (subject: {1}) from {2}\\{3}.",
+                        MaskThumbprint(cert.Thumbprint),
+                        cert.Subject,
+                        storeLocation,
+                        storeName));
+
+                if (!TryAttachClientCertificate(handler, cert))
+                {
+                    throw new InvalidOperationException(
+                        "The current System.Net.Http reference does not expose client certificate APIs on HttpClientHandler. " +
+                        "Use the full .NET Framework System.Net.Http reference in the BizTalk project.");
+                }
+            }
+            else
+            {
+                BizTalkRestLogging.Write(
+                    logger,
+                    BizTalkRestLogLevel.Debug,
+                    "HttpClient",
+                    null,
+                    "Creating HttpClient without client certificate (API-key/header authentication only).");
+            }
 
             var client = new HttpClient(handler, true);
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             return client;
+        }
+
+        private static bool TryAttachClientCertificate(HttpClientHandler handler, X509Certificate2 cert)
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            if (cert == null) throw new ArgumentNullException(nameof(cert));
+
+            var property = handler.GetType().GetProperty("ClientCertificates");
+            if (property == null)
+            {
+                return false;
+            }
+
+            var collection = property.GetValue(handler, null);
+            if (collection == null)
+            {
+                return false;
+            }
+
+            var addMethod = collection.GetType().GetMethod("Add", new[] { typeof(X509Certificate2) })
+                ?? collection.GetType().GetMethod("Add", new[] { typeof(X509Certificate) });
+
+            if (addMethod == null)
+            {
+                return false;
+            }
+
+            addMethod.Invoke(collection, new object[] { cert });
+            return true;
         }
 
         private static X509Certificate2 FindCertificateByThumbprint(
@@ -431,6 +480,16 @@ namespace Bham.BizTalk.Rest
                 var withPrivateKey = found.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey);
                 return withPrivateKey ?? found[0];
             }
+        }
+
+        private static string NormalizeThumbprint(string thumbprint)
+        {
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                return null;
+            }
+
+            return thumbprint.Replace(" ", string.Empty).ToUpperInvariant();
         }
 
         private static string MaskThumbprint(string thumbprint)

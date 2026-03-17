@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net461</TargetFramework>
     <RootNamespace>Bham.BizTalk.Rest</RootNamespace>
     <AssemblyName>Bham.BizTalk.Rest</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
