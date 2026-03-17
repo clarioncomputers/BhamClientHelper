@@ -27,16 +27,69 @@ namespace Bham.BizTalk.Rest
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100)
         {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/json",
+                storeLocation,
+                storeName,
+                timeoutSeconds);
+        }
+
+        /// <summary>
+        /// Sends a PATCH request with JSON body, client certificate, and API key header.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string PatchJsonWithClientCertAndApiKey(
+            string url,
+            string jsonBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                jsonBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/json",
+                "application/json",
+                storeLocation,
+                storeName,
+                timeoutSeconds);
+        }
+
+        /// <summary>
+        /// Sends a GET request with client certificate and API key header.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string GetWithClientCertAndApiKey(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            string acceptMediaType,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100)
+        {
             if (string.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
             if (string.IsNullOrWhiteSpace(certThumbprint)) throw new ArgumentNullException(nameof(certThumbprint));
+            if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
 
             var client = GetOrCreateClient(certThumbprint, storeLocation, storeName, timeoutSeconds);
 
             using (var request = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptMediaType));
                 request.Headers.Add(apiKeyHeaderName, apiKeyHeaderValue);
 
                 using (var response = client.SendAsync(request).GetAwaiter().GetResult())
@@ -59,15 +112,18 @@ namespace Bham.BizTalk.Rest
         }
 
         /// <summary>
-        /// Sends a PATCH request with JSON body, client certificate, and API key header.
+        /// Sends a PATCH request with configurable body and accept media types,
+        /// client certificate, and API key header.
         /// Returns response body as string; throws on non-success HTTP codes.
         /// </summary>
-        public static string PatchJsonWithClientCertAndApiKey(
+        public static string PatchWithClientCertAndApiKey(
             string url,
-            string jsonBody,
+            string body,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
             string certThumbprint,
+            string contentMediaType,
+            string acceptMediaType,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
             int timeoutSeconds = 100)
@@ -76,13 +132,15 @@ namespace Bham.BizTalk.Rest
             if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
             if (string.IsNullOrWhiteSpace(certThumbprint)) throw new ArgumentNullException(nameof(certThumbprint));
+            if (string.IsNullOrWhiteSpace(contentMediaType)) throw new ArgumentNullException(nameof(contentMediaType));
+            if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
 
             var client = GetOrCreateClient(certThumbprint, storeLocation, storeName, timeoutSeconds);
 
             using (var request = new HttpRequestMessage(new HttpMethod("PATCH"), url))
             {
-                request.Content = new StringContent(jsonBody ?? string.Empty, Encoding.UTF8, "application/json");
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, contentMediaType);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptMediaType));
                 request.Headers.Add(apiKeyHeaderName, apiKeyHeaderValue);
 
                 using (var response = client.SendAsync(request).GetAwaiter().GetResult())
