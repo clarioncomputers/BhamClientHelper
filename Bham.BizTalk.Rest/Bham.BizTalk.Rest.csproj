@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net46</TargetFramework>
+    <RootNamespace>Bham.BizTalk.Rest</RootNamespace>
+    <AssemblyName>Bham.BizTalk.Rest</AssemblyName>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <SignAssembly Condition="Exists('Bham.BizTalk.Rest.snk')">true</SignAssembly>
+    <AssemblyOriginatorKeyFile Condition="Exists('Bham.BizTalk.Rest.snk')">Bham.BizTalk.Rest.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+
+</Project>
