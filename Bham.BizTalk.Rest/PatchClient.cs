@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Bham.BizTalk.Rest
 {
@@ -25,7 +27,8 @@ namespace Bham.BizTalk.Rest
             string certThumbprint,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
-            int timeoutSeconds = 100)
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
         {
             return GetWithClientCertAndApiKey(
                 url,
@@ -35,7 +38,34 @@ namespace Bham.BizTalk.Rest
                 "application/json",
                 storeLocation,
                 storeName,
-                timeoutSeconds);
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a GET request with XML accept header, client certificate, and API key header.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string GetXmlWithClientCertAndApiKey(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/xml",
+                storeLocation,
+                storeName,
+                timeoutSeconds,
+                logger);
         }
 
         /// <summary>
@@ -50,7 +80,8 @@ namespace Bham.BizTalk.Rest
             string certThumbprint,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
-            int timeoutSeconds = 100)
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
         {
             return PatchWithClientCertAndApiKey(
                 url,
@@ -62,7 +93,37 @@ namespace Bham.BizTalk.Rest
                 "application/json",
                 storeLocation,
                 storeName,
-                timeoutSeconds);
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a PATCH request with XML body, XML accept header, client certificate, and API key header.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string PatchXmlWithClientCertAndApiKey(
+            string url,
+            string xmlBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                xmlBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/xml",
+                "application/xml",
+                storeLocation,
+                storeName,
+                timeoutSeconds,
+                logger);
         }
 
         /// <summary>
@@ -77,38 +138,22 @@ namespace Bham.BizTalk.Rest
             string acceptMediaType,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
-            int timeoutSeconds = 100)
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
         {
-            if (string.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
-            if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
-            if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
-            if (string.IsNullOrWhiteSpace(certThumbprint)) throw new ArgumentNullException(nameof(certThumbprint));
-            if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
-
-            var client = GetOrCreateClient(certThumbprint, storeLocation, storeName, timeoutSeconds);
-
-            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
-            {
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptMediaType));
-                request.Headers.Add(apiKeyHeaderName, apiKeyHeaderValue);
-
-                using (var response = client.SendAsync(request).GetAwaiter().GetResult())
-                {
-                    var responseText = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new HttpRequestException(
-                            string.Format(
-                                "GET failed: {0} ({1}). Response: {2}",
-                                (int)response.StatusCode,
-                                response.StatusCode,
-                                responseText));
-                    }
-
-                    return responseText;
-                }
-            }
+            return ExecuteRequest(
+                HttpMethod.Get,
+                url,
+                null,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                null,
+                acceptMediaType,
+                storeLocation,
+                storeName,
+                timeoutSeconds,
+                logger);
         }
 
         /// <summary>
@@ -126,47 +171,186 @@ namespace Bham.BizTalk.Rest
             string acceptMediaType,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
             StoreName storeName = StoreName.My,
-            int timeoutSeconds = 100)
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
         {
+            return ExecuteRequest(
+                new HttpMethod("PATCH"),
+                url,
+                body,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                contentMediaType,
+                acceptMediaType,
+                storeLocation,
+                storeName,
+                timeoutSeconds,
+                logger);
+        }
+
+        private static string ExecuteRequest(
+            HttpMethod method,
+            string url,
+            string body,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            string contentMediaType,
+            string acceptMediaType,
+            StoreLocation storeLocation,
+            StoreName storeName,
+            int timeoutSeconds,
+            Action<BizTalkRestLogEntry> logger)
+        {
+            ValidateRequestArguments(
+                method,
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                contentMediaType,
+                acceptMediaType,
+                timeoutSeconds);
+
+            try
+            {
+                var client = GetOrCreateClient(certThumbprint, storeLocation, storeName, timeoutSeconds, logger);
+
+                using (var request = new HttpRequestMessage(method, url))
+                {
+                    if (body != null)
+                    {
+                        request.Content = new StringContent(body, Encoding.UTF8, contentMediaType);
+                    }
+
+                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptMediaType));
+                    request.Headers.Add(apiKeyHeaderName, apiKeyHeaderValue);
+
+                    BizTalkRestLogging.Write(
+                        logger,
+                        BizTalkRestLogLevel.Information,
+                        method.Method,
+                        url,
+                        string.Format("Sending {0} request. Timeout={1}s.", method.Method, timeoutSeconds));
+
+                    using (var response = client.SendAsync(request).GetAwaiter().GetResult())
+                    {
+                        var responseText = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var httpException = CreateHttpFailure(method.Method, url, response.StatusCode, responseText);
+                            BizTalkRestLogging.Write(
+                                logger,
+                                BizTalkRestLogLevel.Error,
+                                method.Method,
+                                url,
+                                httpException.Message,
+                                httpException,
+                                (int)response.StatusCode);
+                            throw httpException;
+                        }
+
+                        BizTalkRestLogging.Write(
+                            logger,
+                            BizTalkRestLogLevel.Information,
+                            method.Method,
+                            url,
+                            string.Format(
+                                "{0} request succeeded with status {1}. ResponseLength={2}.",
+                                method.Method,
+                                (int)response.StatusCode,
+                                responseText == null ? 0 : responseText.Length),
+                            statusCode: (int)response.StatusCode);
+
+                        return responseText;
+                    }
+                }
+            }
+            catch (BizTalkRestClientException)
+            {
+                throw;
+            }
+            catch (TaskCanceledException ex)
+            {
+                var timeoutException = new BizTalkRestClientException(
+                    method.Method,
+                    url,
+                    string.Format("{0} request timed out after {1} seconds.", method.Method, timeoutSeconds),
+                    ex);
+                BizTalkRestLogging.Write(
+                    logger,
+                    BizTalkRestLogLevel.Error,
+                    method.Method,
+                    url,
+                    timeoutException.Message,
+                    timeoutException);
+                throw timeoutException;
+            }
+            catch (Exception ex)
+            {
+                var wrappedException = new BizTalkRestClientException(
+                    method.Method,
+                    url,
+                    string.Format("{0} request failed before a successful response was received.", method.Method),
+                    ex);
+                BizTalkRestLogging.Write(
+                    logger,
+                    BizTalkRestLogLevel.Error,
+                    method.Method,
+                    url,
+                    wrappedException.Message,
+                    wrappedException);
+                throw wrappedException;
+            }
+        }
+
+        private static void ValidateRequestArguments(
+            HttpMethod method,
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            string contentMediaType,
+            string acceptMediaType,
+            int timeoutSeconds)
+        {
+            if (method == null) throw new ArgumentNullException(nameof(method));
             if (string.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
             if (string.IsNullOrWhiteSpace(certThumbprint)) throw new ArgumentNullException(nameof(certThumbprint));
-            if (string.IsNullOrWhiteSpace(contentMediaType)) throw new ArgumentNullException(nameof(contentMediaType));
             if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
+            if (method != HttpMethod.Get && string.IsNullOrWhiteSpace(contentMediaType)) throw new ArgumentNullException(nameof(contentMediaType));
+            if (timeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(timeoutSeconds));
+        }
 
-            var client = GetOrCreateClient(certThumbprint, storeLocation, storeName, timeoutSeconds);
-
-            using (var request = new HttpRequestMessage(new HttpMethod("PATCH"), url))
-            {
-                request.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, contentMediaType);
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptMediaType));
-                request.Headers.Add(apiKeyHeaderName, apiKeyHeaderValue);
-
-                using (var response = client.SendAsync(request).GetAwaiter().GetResult())
-                {
-                    var responseText = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new HttpRequestException(
-                            string.Format(
-                                "PATCH failed: {0} ({1}). Response: {2}",
-                                (int)response.StatusCode,
-                                response.StatusCode,
-                                responseText));
-                    }
-
-                    return responseText;
-                }
-            }
+        private static BizTalkRestClientException CreateHttpFailure(
+            string operation,
+            string url,
+            HttpStatusCode statusCode,
+            string responseText)
+        {
+            return new BizTalkRestClientException(
+                operation,
+                url,
+                string.Format(
+                    "{0} failed with status {1} ({2}). Response: {3}",
+                    operation,
+                    (int)statusCode,
+                    statusCode,
+                    responseText),
+                statusCode: (int)statusCode,
+                responseBody: responseText);
         }
 
         private static HttpClient GetOrCreateClient(
             string certThumbprint,
             StoreLocation storeLocation,
             StoreName storeName,
-            int timeoutSeconds)
+            int timeoutSeconds,
+            Action<BizTalkRestLogEntry> logger)
         {
             var normalizedThumbprint = certThumbprint.Replace(" ", string.Empty).ToUpperInvariant();
             var key = string.Format(
@@ -179,18 +363,39 @@ namespace Bham.BizTalk.Rest
             var lazyClient = ClientCache.GetOrAdd(
                 key,
                 _ => new Lazy<HttpClient>(
-                    () => CreateClient(normalizedThumbprint, storeLocation, storeName, timeoutSeconds),
+                    () => CreateClient(normalizedThumbprint, storeLocation, storeName, timeoutSeconds, logger),
                     true));
 
-            return lazyClient.Value;
+            try
+            {
+                return lazyClient.Value;
+            }
+            catch
+            {
+                Lazy<HttpClient> removedClient;
+                ClientCache.TryRemove(key, out removedClient);
+                throw;
+            }
         }
 
         private static HttpClient CreateClient(
             string thumbprint,
             StoreLocation storeLocation,
             StoreName storeName,
-            int timeoutSeconds)
+            int timeoutSeconds,
+            Action<BizTalkRestLogEntry> logger)
         {
+            BizTalkRestLogging.Write(
+                logger,
+                BizTalkRestLogLevel.Debug,
+                "HttpClient",
+                null,
+                string.Format(
+                    "Creating HttpClient using certificate {0} from {1}\\{2}.",
+                    MaskThumbprint(thumbprint),
+                    storeLocation,
+                    storeName));
+
             var cert = FindCertificateByThumbprint(thumbprint, storeLocation, storeName);
 
             var handler = new HttpClientHandler();
@@ -226,6 +431,22 @@ namespace Bham.BizTalk.Rest
                 var withPrivateKey = found.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey);
                 return withPrivateKey ?? found[0];
             }
+        }
+
+        private static string MaskThumbprint(string thumbprint)
+        {
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                return string.Empty;
+            }
+
+            var normalized = thumbprint.Replace(" ", string.Empty).ToUpperInvariant();
+            if (normalized.Length <= 6)
+            {
+                return normalized;
+            }
+
+            return new string('*', normalized.Length - 6) + normalized.Substring(normalized.Length - 6);
         }
     }
 }

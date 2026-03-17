@@ -18,6 +18,8 @@ namespace Bham.BizTalk.Rest
         public StoreName StoreName { get; set; } = StoreName.My;
 
         public int TimeoutSeconds { get; set; } = 100;
+
+        public Action<BizTalkRestLogEntry> Logger { get; set; }
     }
 
     /// <summary>
@@ -34,6 +36,7 @@ namespace Bham.BizTalk.Rest
             if (string.IsNullOrWhiteSpace(_settings.ApiKeyHeaderName)) throw new ArgumentNullException(nameof(settings.ApiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(_settings.ApiKeyHeaderValue)) throw new ArgumentNullException(nameof(settings.ApiKeyHeaderValue));
             if (string.IsNullOrWhiteSpace(_settings.CertThumbprint)) throw new ArgumentNullException(nameof(settings.CertThumbprint));
+            if (_settings.TimeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(settings.TimeoutSeconds));
         }
 
         public string GetJson(string baseUrl, IDictionary<string, string> queryParameters = null)
@@ -47,7 +50,8 @@ namespace Bham.BizTalk.Rest
                 "application/json",
                 _settings.StoreLocation,
                 _settings.StoreName,
-                _settings.TimeoutSeconds);
+                _settings.TimeoutSeconds,
+                _settings.Logger);
         }
 
         public string GetXml(string baseUrl, IDictionary<string, string> queryParameters = null)
@@ -61,7 +65,8 @@ namespace Bham.BizTalk.Rest
                 "application/xml",
                 _settings.StoreLocation,
                 _settings.StoreName,
-                _settings.TimeoutSeconds);
+                _settings.TimeoutSeconds,
+                _settings.Logger);
         }
 
         public string PatchJson(string url, string jsonBody)
@@ -76,7 +81,8 @@ namespace Bham.BizTalk.Rest
                 "application/json",
                 _settings.StoreLocation,
                 _settings.StoreName,
-                _settings.TimeoutSeconds);
+                _settings.TimeoutSeconds,
+                _settings.Logger);
         }
 
         public string PatchXml(string url, string xmlBody)
@@ -91,7 +97,8 @@ namespace Bham.BizTalk.Rest
                 "application/xml",
                 _settings.StoreLocation,
                 _settings.StoreName,
-                _settings.TimeoutSeconds);
+                _settings.TimeoutSeconds,
+                _settings.Logger);
         }
 
         public static string BuildUrl(string baseUrl, IDictionary<string, string> queryParameters)

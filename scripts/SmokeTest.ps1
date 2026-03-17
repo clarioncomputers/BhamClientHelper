@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('getpublicjson', 'patchpublicjson')]
+    [ValidateSet('getpublicjson', 'patchpublicjson', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
     [string]$Mode,
 
     [Parameter(Mandatory = $true)]
@@ -10,7 +10,17 @@ param(
 
     [string]$Body = '{"status":"Done"}',
 
-    [int]$TimeoutSeconds = 100
+    [int]$TimeoutSeconds = 100,
+
+    [int]$DelayMilliseconds = 5000,
+
+    [int]$StatusCode = 503,
+
+    [string]$ApiHeaderName = 'x-api-key',
+
+    [string]$ApiHeaderValue = 'smoke-test',
+
+    [string]$Thumbprint = '0000000000000000000000000000000000000000'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -69,4 +79,51 @@ if ($Mode -eq 'patchpublicjson') {
     Write-Host 'PUBLIC PATCH JSON succeeded.' -ForegroundColor Green
     $response | ConvertTo-Json -Depth 20
     exit 0
+}
+
+$projectPath = Join-Path $PSScriptRoot '..\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj'
+
+if ($Mode -eq 'scenariomissingcert') {
+    dotnet run --project $projectPath -- scenariomissingcert $Url $ApiHeaderName $ApiHeaderValue $Thumbprint LocalMachine My $TimeoutSeconds
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariotimeoutpublic') {
+    dotnet run --project $projectPath -- scenariotimeoutpublic $DelayMilliseconds $TimeoutSeconds
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariotimeoutpublicxml') {
+    dotnet run --project $projectPath -- scenariotimeoutpublicxml $DelayMilliseconds $TimeoutSeconds
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariononsuccesshttp') {
+    dotnet run --project $projectPath -- scenariononsuccesshttp $StatusCode $TimeoutSeconds $Body
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariononsuccesshttpxml') {
+    dotnet run --project $projectPath -- scenariononsuccesshttpxml $StatusCode $TimeoutSeconds $Body
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariononsuccesshttps') {
+    dotnet run --project $projectPath -- scenariononsuccesshttps $Url $TimeoutSeconds
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'scenariononsuccesshttpsxml') {
+    dotnet run --project $projectPath -- scenariononsuccesshttpsxml $Url $TimeoutSeconds
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'runfailurescenarios') {
+    dotnet run --project $projectPath -- runfailurescenarios $Url
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'runfailurescenariosxml') {
+    dotnet run --project $projectPath -- runfailurescenariosxml $Url
+    exit $LASTEXITCODE
 }
