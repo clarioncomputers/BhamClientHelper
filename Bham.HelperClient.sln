@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bham.BizTalk.Rest", "Bham.B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bham.BizTalk.Rest.SmokeTest", "Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj", "{87D25F29-6B51-4936-BA1D-D5C8CD9C775F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bham.BizTalk.Rest.Tests", "Bham.BizTalk.Rest.Tests\Bham.BizTalk.Rest.Tests.csproj", "{1D497F1A-C849-49F2-B867-4FC26F535438}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{87D25F29-6B51-4936-BA1D-D5C8CD9C775F}.Release|x64.Build.0 = Release|Any CPU
 		{87D25F29-6B51-4936-BA1D-D5C8CD9C775F}.Release|x86.ActiveCfg = Release|Any CPU
 		{87D25F29-6B51-4936-BA1D-D5C8CD9C775F}.Release|x86.Build.0 = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|x64.Build.0 = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Debug|x86.Build.0 = Debug|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|x64.ActiveCfg = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|x64.Build.0 = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|x86.ActiveCfg = Release|Any CPU
+		{1D497F1A-C849-49F2-B867-4FC26F535438}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

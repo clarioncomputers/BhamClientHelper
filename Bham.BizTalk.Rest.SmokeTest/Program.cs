@@ -364,6 +364,7 @@ internal static class Program
 
 	private static string ExecutePublicRequest(HttpMethod method, string url, string body, string mediaType, int timeoutSeconds)
 	{
+		ValidateUrl(url);
 		using (var client = new HttpClient())
 		using (var request = new HttpRequestMessage(method, url))
 		{
@@ -391,6 +392,16 @@ internal static class Program
 
 				return responseText;
 			}
+		}
+	}
+
+	private static void ValidateUrl(string url)
+	{
+		Uri parsed;
+		if (!Uri.TryCreate(url, UriKind.Absolute, out parsed) ||
+			(parsed.Scheme != Uri.UriSchemeHttp && parsed.Scheme != Uri.UriSchemeHttps))
+		{
+			throw new ArgumentException("URL must be an absolute http or https URI.");
 		}
 	}
 

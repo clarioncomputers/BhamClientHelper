@@ -318,11 +318,22 @@ namespace Bham.BizTalk.Rest
         {
             if (method == null) throw new ArgumentNullException(nameof(method));
             if (string.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
+            ValidateUrlScheme(url);
             if (string.IsNullOrWhiteSpace(apiKeyHeaderName)) throw new ArgumentNullException(nameof(apiKeyHeaderName));
             if (string.IsNullOrWhiteSpace(apiKeyHeaderValue)) throw new ArgumentNullException(nameof(apiKeyHeaderValue));
             if (string.IsNullOrWhiteSpace(acceptMediaType)) throw new ArgumentNullException(nameof(acceptMediaType));
             if (method != HttpMethod.Get && string.IsNullOrWhiteSpace(contentMediaType)) throw new ArgumentNullException(nameof(contentMediaType));
             if (timeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(timeoutSeconds));
+        }
+
+        private static void ValidateUrlScheme(string url)
+        {
+            Uri parsed;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out parsed) ||
+                (parsed.Scheme != Uri.UriSchemeHttp && parsed.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new ArgumentException("URL must be an absolute http or https URI.", "url");
+            }
         }
 
         private static BizTalkRestClientException CreateHttpFailure(

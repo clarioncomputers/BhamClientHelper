@@ -18,6 +18,38 @@ BizTalk 2016 helper library that adds outbound REST support for HTTP GET and HTT
 dotnet build .\Bham.HelperClient.sln -c Release
 ```
 
+One-command local restore, build, and tests:
+```powershell
+.\scripts\build-and-test.ps1 -Configuration Release
+```
+
+## Unit tests
+- Test project: `Bham.BizTalk.Rest.Tests` (`net461`, lightweight in-project assertions).
+- Current coverage includes:
+	- `BizTalkRestClient.BuildUrl(...)` query composition/encoding behavior.
+	- URL scheme guard behavior (`http`/`https` only) to reduce SSRF risk.
+
+Run tests locally (after build):
+```powershell
+[Reflection.Assembly]::LoadFrom("$PWD\Bham.BizTalk.Rest.Tests\bin\Release\Bham.BizTalk.Rest.Tests.dll") | Out-Null
+[Bham.BizTalk.Rest.Tests.TestRunner]::RunAll()
+```
+
+Build the full solution:
+```powershell
+dotnet build .\Bham.HelperClient.sln -c Release
+```
+
+## Automatic test execution (CI)
+- Workflow file: `.github/workflows/ci.yml`.
+- Triggers: every `push` and every `pull_request`.
+- Steps performed automatically in GitHub Actions:
+	1. `nuget restore Bham.HelperClient.sln`
+	2. `msbuild Bham.HelperClient.sln /p:Configuration=Release /p:Platform="Any CPU" /m`
+	3. Load `Bham.BizTalk.Rest.Tests.dll` and run `[Bham.BizTalk.Rest.Tests.TestRunner]::RunAll()`
+
+This means test failures will fail the CI job and show directly on the commit/PR checks.
+
 ## Public helper methods
 - `PatchClient.GetJsonWithClientCertAndApiKey(...)`
 - `PatchClient.GetXmlWithClientCertAndApiKey(...)`
@@ -38,6 +70,35 @@ dotnet build .\Bham.HelperClient.sln -c Release
 - The helper attaches client certificates to `HttpClientHandler` using reflection to support BizTalk projects where `ClientCertificates` is not visible at compile time due to `System.Net.Http` API-surface differences.
 - Runtime still requires a `System.Net.Http` implementation that supports client certificate attachment.
 - If runtime support is missing, the helper throws a clear `InvalidOperationException` describing the reference issue.
+
+## BizTalk 2016 CU9 validation checklist
+Use this checklist in a BizTalk 2016 CU9 test environment before production rollout.
+
+1. Runtime and assembly checks
+	- Confirm the BizTalk server is on CU9 and the host instance is running under the expected service account.
+	- Deploy `Bham.BizTalk.Rest.dll` to the location used by your BizTalk host (or GAC if that is your standard).
+	- Verify assembly loading and binding in Event Viewer (no `System.Net.Http` or dependency binding errors).
+
+2. Certificate and permissions checks
+	- Import the client certificate into the exact store you configured (`LocalMachine/My` by default).
+	- Grant the BizTalk host instance account private key access to that certificate.
+	- Validate thumbprint value and ensure no hidden characters/spaces are present.
+
+3. Connectivity and TLS checks
+	- Validate outbound DNS and firewall access from the BizTalk server to target endpoints.
+	- Confirm TLS/cipher policy on the server supports the endpoint requirements.
+
+4. Smoke and failure validation
+	- Run smoke tests from `Bham.BizTalk.Rest.SmokeTest` with representative GET/PATCH requests.
+	- Run failure scenarios (`scenariomissingcert`, timeout, non-success HTTP/HTTPS) to verify expected error handling and logging.
+
+5. Orchestration end-to-end validation
+	- Execute at least one real orchestration path using this helper.
+	- Verify request/response handling, exception behavior, and tracking/log output match expectations.
+
+6. Release readiness gate
+	- Keep CI green (workflow checks) and require passing checks on the deployment PR.
+	- Promote only after all checklist steps pass in the CU9 environment.
 
 ## BizTalk call shape examples
 Use an Expression shape or Call Rules shape to invoke the helper and store the response in orchestration string variables.
@@ -129,15 +190,15 @@ Practical notes:
 
 Examples:
 ```powershell
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariomissingcert
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariotimeoutpublic 5000 1
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariotimeoutpublicxml 5000 1
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariononsuccesshttp 503 30
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariononsuccesshttpxml 503 30 "<error>forced-http-failure</error>"
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariononsuccesshttps https://httpstat.us/503 30
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- scenariononsuccesshttpsxml https://httpstat.us/503 30
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- runfailurescenarios https://httpstat.us/503
-dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- runfailurescenariosxml https://httpstat.us/503
+.\scripts\SmokeTest.ps1 -Mode scenariomissingcert
+.\scripts\SmokeTest.ps1 -Mode scenariotimeoutpublic -DelayMilliseconds 5000 -TimeoutSeconds 1
+.\scripts\SmokeTest.ps1 -Mode scenariotimeoutpublicxml -DelayMilliseconds 5000 -TimeoutSeconds 1
+.\scripts\SmokeTest.ps1 -Mode scenariononsuccesshttp -StatusCode 503 -TimeoutSeconds 30
+.\scripts\SmokeTest.ps1 -Mode scenariononsuccesshttpxml -StatusCode 503 -TimeoutSeconds 30 -Body "<error>forced-http-failure</error>"
+.\scripts\SmokeTest.ps1 -Mode scenariononsuccesshttps -Url https://httpstat.us/503 -TimeoutSeconds 30
+.\scripts\SmokeTest.ps1 -Mode scenariononsuccesshttpsxml -Url https://httpstat.us/503 -TimeoutSeconds 30
+.\scripts\SmokeTest.ps1 -Mode runfailurescenarios -Url https://httpstat.us/503
+.\scripts\SmokeTest.ps1 -Mode runfailurescenariosxml -Url https://httpstat.us/503
 ```
 
 Example:
@@ -172,7 +233,7 @@ dotnet build .\Bham.HelperClient.sln -c Release
 ```
 3. Verify the assembly is strong-named:
 ```powershell
-sn -vf .\Bham.BizTalk.Rest\bin\Release\net46\Bham.BizTalk.Rest.dll
+sn -vf .\Bham.BizTalk.Rest\bin\Release\Bham.BizTalk.Rest.dll
 ```
 4. Add to GAC on your BizTalk server using your deployment process.
 

@@ -3,8 +3,7 @@ param(
     [ValidateSet('getpublicjson', 'patchpublicjson', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
     [string]$Mode,
 
-    [Parameter(Mandatory = $true)]
-    [string]$Url,
+    [string]$Url = 'https://httpstat.us/503',
 
     [string]$Query = '-',
 
@@ -16,6 +15,9 @@ param(
 
     [int]$StatusCode = 503,
 
+    [ValidateSet('Debug', 'Release')]
+    [string]$Configuration = 'Release',
+
     [string]$ApiHeaderName = 'x-api-key',
 
     [string]$ApiHeaderValue = 'smoke-test',
@@ -24,6 +26,123 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Ensure-SmokeTestExecutable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExecutablePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BuildConfiguration
+    )
+
+    if (Test-Path $ExecutablePath) {
+        return
+    }
+
+    dotnet build $ProjectPath -c $BuildConfiguration
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to build smoke test project."
+    }
+
+    if (-not (Test-Path $ExecutablePath)) {
+        throw "Smoke test executable not found after build: $ExecutablePath"
+    }
+}
+
+function New-SmokeExecutableAccessException {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExecutablePath,
+
+        [string]$Detail
+    )
+
+    $message = @(
+        "Unable to access or execute the smoke test binary:",
+        "  $ExecutablePath",
+        "",
+        "This machine appears to block execution/read access for generated EXE files in the workspace.",
+        "",
+        "Try one of the following:",
+        "  1. Run PowerShell or VS Code as Administrator.",
+        "  2. Unblock the file/folder (right-click Properties -> Unblock).",
+        "  3. Exclude this workspace from endpoint protection policy.",
+        "  4. Build and run from a trusted local folder.",
+        ""
+    ) -join [Environment]::NewLine
+
+    if (-not [string]::IsNullOrWhiteSpace($Detail)) {
+        $message += "Original error: $Detail"
+    }
+
+    return New-Object System.InvalidOperationException($message)
+}
+
+function Test-SmokeExecutableAccess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExecutablePath
+    )
+
+    try {
+        $stream = [System.IO.File]::OpenRead($ExecutablePath)
+        $stream.Close()
+    }
+    catch {
+        throw (New-SmokeExecutableAccessException -ExecutablePath $ExecutablePath -Detail $_.Exception.Message)
+    }
+}
+
+function Invoke-SmokeTestMode {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExecutablePath,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    try {
+        & $ExecutablePath @Arguments
+        return $LASTEXITCODE
+    }
+    catch {
+        if ($_.Exception.Message -notmatch 'Access is denied') {
+            throw
+        }
+
+        # Some environments block direct EXE launch from the workspace.
+        # Fall back to invoking the entry point via reflection.
+        # If LoadFrom is blocked, load bytes into memory.
+        try {
+            $assembly = [Reflection.Assembly]::LoadFrom($ExecutablePath)
+        }
+        catch {
+            try {
+                $assemblyBytes = [System.IO.File]::ReadAllBytes($ExecutablePath)
+                $assembly = [Reflection.Assembly]::Load($assemblyBytes)
+            }
+            catch {
+                throw (New-SmokeExecutableAccessException -ExecutablePath $ExecutablePath -Detail $_.Exception.Message)
+            }
+        }
+        $entryPoint = $assembly.EntryPoint
+        if ($entryPoint -eq $null) {
+            throw "Smoke test assembly has no entry point: $ExecutablePath"
+        }
+
+        $result = $entryPoint.Invoke($null, @((,([string[]]$Arguments))))
+        if ($result -is [int]) {
+            return [int]$result
+        }
+
+        return 0
+    }
+}
 
 function Build-Url {
     param(
@@ -65,6 +184,10 @@ function Build-Url {
 }
 
 if ($Mode -eq 'getpublicjson') {
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        throw 'Url is required for getpublicjson.'
+    }
+
     $requestUrl = Build-Url -BaseUrl $Url -QueryString $Query
     $response = Invoke-RestMethod -Uri $requestUrl -Method Get -TimeoutSec $TimeoutSeconds
 
@@ -74,6 +197,10 @@ if ($Mode -eq 'getpublicjson') {
 }
 
 if ($Mode -eq 'patchpublicjson') {
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        throw 'Url is required for patchpublicjson.'
+    }
+
     $response = Invoke-RestMethod -Uri $Url -Method Patch -ContentType 'application/json' -Body $Body -TimeoutSec $TimeoutSeconds
 
     Write-Host 'PUBLIC PATCH JSON succeeded.' -ForegroundColor Green
@@ -82,48 +209,52 @@ if ($Mode -eq 'patchpublicjson') {
 }
 
 $projectPath = Join-Path $PSScriptRoot '..\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj'
+$executablePath = Join-Path $PSScriptRoot ("..\Bham.BizTalk.Rest.SmokeTest\bin\{0}\Bham.BizTalk.Rest.SmokeTest.exe" -f $Configuration)
+
+Ensure-SmokeTestExecutable -ProjectPath $projectPath -ExecutablePath $executablePath -BuildConfiguration $Configuration
+Test-SmokeExecutableAccess -ExecutablePath $executablePath
 
 if ($Mode -eq 'scenariomissingcert') {
-    dotnet run --project $projectPath -- scenariomissingcert $Url $ApiHeaderName $ApiHeaderValue $Thumbprint LocalMachine My $TimeoutSeconds
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariomissingcert', $Url, $ApiHeaderName, $ApiHeaderValue, $Thumbprint, 'LocalMachine', 'My', $TimeoutSeconds)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariotimeoutpublic') {
-    dotnet run --project $projectPath -- scenariotimeoutpublic $DelayMilliseconds $TimeoutSeconds
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariotimeoutpublic', $DelayMilliseconds, $TimeoutSeconds)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariotimeoutpublicxml') {
-    dotnet run --project $projectPath -- scenariotimeoutpublicxml $DelayMilliseconds $TimeoutSeconds
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariotimeoutpublicxml', $DelayMilliseconds, $TimeoutSeconds)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariononsuccesshttp') {
-    dotnet run --project $projectPath -- scenariononsuccesshttp $StatusCode $TimeoutSeconds $Body
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariononsuccesshttp', $StatusCode, $TimeoutSeconds, $Body)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariononsuccesshttpxml') {
-    dotnet run --project $projectPath -- scenariononsuccesshttpxml $StatusCode $TimeoutSeconds $Body
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariononsuccesshttpxml', $StatusCode, $TimeoutSeconds, $Body)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariononsuccesshttps') {
-    dotnet run --project $projectPath -- scenariononsuccesshttps $Url $TimeoutSeconds
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariononsuccesshttps', $Url, $TimeoutSeconds)
+    exit $exitCode
 }
 
 if ($Mode -eq 'scenariononsuccesshttpsxml') {
-    dotnet run --project $projectPath -- scenariononsuccesshttpsxml $Url $TimeoutSeconds
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('scenariononsuccesshttpsxml', $Url, $TimeoutSeconds)
+    exit $exitCode
 }
 
 if ($Mode -eq 'runfailurescenarios') {
-    dotnet run --project $projectPath -- runfailurescenarios $Url
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('runfailurescenarios', $Url)
+    exit $exitCode
 }
 
 if ($Mode -eq 'runfailurescenariosxml') {
-    dotnet run --project $projectPath -- runfailurescenariosxml $Url
-    exit $LASTEXITCODE
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('runfailurescenariosxml', $Url)
+    exit $exitCode
 }
