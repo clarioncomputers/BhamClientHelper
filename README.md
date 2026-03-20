@@ -64,10 +64,14 @@ This means test failures will fail the CI job and show directly on the commit/PR
 - `PatchClient.PatchJsonWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
 - `PatchClient.PatchXmlWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
 
-## BizTalk ODX samples
-- `samples/BizTalkRestClientSample.odx`: lightweight sample with Expression-shape statements for GET/PATCH.
-- `samples/BizTalkRestClientSample.DesignerStyle.odx`: designer-style sample with richer orchestration metadata.
-- `samples/Bham.HelperClient.ImportOriented.Template.odx`: import-oriented template with placeholders and multiple expression call patterns.
+## BizTalk Expression shape snippets
+`samples/ExpressionShapeSnippets.cs` contains ready-to-copy statements covering all method overloads:
+- GET JSON / XML, no certificate
+- GET JSON / XML, certificate with default store (LocalMachine\My)
+- PATCH JSON / XML, no certificate
+- PATCH JSON / XML, certificate with default store (LocalMachine\My)
+
+Copy the relevant block directly into a BizTalk Expression shape. Do not add the file to a project — it is reference only.
 
 ## Error handling and logging
 - GET and PATCH failures now surface as `BizTalkRestClientException`, including the HTTP method, URL, optional status code, and response body when one is available.
