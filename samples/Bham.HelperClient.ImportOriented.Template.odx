@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Import-oriented BizTalk ODX template.
+  Purpose: provide a near-real orchestration artifact with Expression shapes that call
+  Bham.BizTalk.Rest.PatchClient helper methods.
+
+  IMPORTANT:
+  - Replace TODO values (namespace/project-specific names) before importing.
+  - Keep the expression statements as-is unless your variable names differ.
+-->
+<om:MetaModel MajorVersion="1" MinorVersion="0" ODXSchemaVersion="1.0" xmlns:om="http://schemas.microsoft.com/BizTalk/2003/DesignerData" Root="ModuleRef">
+  <om:Element Type="Module" OID="id-module-import-1" LowerBound="1.1" HigherBound="140.1" Name="Bham_HelperClient_BizTalk_Module">
+    <om:Property Name="Namespace" Value="Bham.BizTalk.Orchestrations" />
+    <om:Property Name="ReportToEventLog" Value="True" />
+
+    <!-- TODO: Point to your real port type(s) and operation signatures -->
+    <om:Element Type="PortType" OID="id-porttype-import-1" ParentLink="Module_PortType" LowerBound="10.1" HigherBound="14.1" Name="OrdersPortType" />
+
+    <om:Element Type="ServiceDeclaration" OID="id-service-import-1" ParentLink="Module_ServiceDeclaration" LowerBound="20.1" HigherBound="135.1" Name="RestOrdersOrchestration">
+      <om:Property Name="Guid" Value="bd7acac6-f2d2-4c53-94df-5a4cc211a604" />
+      <om:Property Name="GenerateTypedXmlDocument" Value="False" />
+      <om:Property Name="ImplementationConstructor" Value="false" />
+
+      <!-- Orchestration variables -->
+      <om:Element Type="Variable" OID="id-var-apikey" ParentLink="ServiceDeclaration_Variable" LowerBound="25.1" HigherBound="25.50" Name="strApiKey">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-customerid" ParentLink="ServiceDeclaration_Variable" LowerBound="26.1" HigherBound="26.50" Name="strCustomerId">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-orderid" ParentLink="ServiceDeclaration_Variable" LowerBound="27.1" HigherBound="27.50" Name="strOrderId">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-thumb" ParentLink="ServiceDeclaration_Variable" LowerBound="28.1" HigherBound="28.50" Name="strCertThumbprint">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-getresponse" ParentLink="ServiceDeclaration_Variable" LowerBound="29.1" HigherBound="29.50" Name="strGetResponse">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-patchbody" ParentLink="ServiceDeclaration_Variable" LowerBound="30.1" HigherBound="30.50" Name="strPatchBody">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+      <om:Element Type="Variable" OID="id-var-patchresponse" ParentLink="ServiceDeclaration_Variable" LowerBound="31.1" HigherBound="31.50" Name="strPatchResponse">
+        <om:Property Name="Type" Value="System.String" />
+      </om:Element>
+
+      <om:Element Type="ServiceBody" OID="id-body-import-1" ParentLink="ServiceDeclaration_ServiceBody" LowerBound="40.1" HigherBound="133.1" Name="ServiceBody_1">
+        <om:Element Type="Shape" OID="id-seq-main" ParentLink="ServiceBody_Statement" LowerBound="41.1" HigherBound="132.1" Name="Main">
+          <om:Property Name="ShapeType" Value="Sequence" />
+
+          <!-- Expression 1: GET without certificate -->
+          <om:Element Type="Shape" OID="id-expr-get-nocert" ParentLink="Shape_Statement" LowerBound="50.1" HigherBound="58.1" Name="Expr_Get_NoCertificate">
+            <om:Property Name="ShapeType" Value="Expression" />
+            <om:Property Name="Statement" Value="strGetResponse = Bham.BizTalk.Rest.PatchClient.GetJsonWithApiKey(&quot;https://api.example.com/orders?customerId=&quot; + strCustomerId + &quot;&amp;status=Open&quot;, &quot;x-api-key&quot;, strApiKey, 100);" />
+          </om:Element>
+
+          <!-- Expression 2: GET with certificate, default LocalMachine/My store -->
+          <om:Element Type="Shape" OID="id-expr-get-defaultstore" ParentLink="Shape_Statement" LowerBound="60.1" HigherBound="69.1" Name="Expr_Get_WithCertificate_DefaultStore">
+            <om:Property Name="ShapeType" Value="Expression" />
+            <om:Property Name="Statement" Value="strGetResponse = Bham.BizTalk.Rest.PatchClient.GetJsonWithClientCertAndApiKeyDefaultStore(&quot;https://api.example.com/orders?customerId=&quot; + strCustomerId + &quot;&amp;status=Open&quot;, &quot;x-api-key&quot;, strApiKey, strCertThumbprint, 100);" />
+          </om:Element>
+
+          <!-- Expression 3: build PATCH payload -->
+          <om:Element Type="Shape" OID="id-expr-build-payload" ParentLink="Shape_Statement" LowerBound="71.1" HigherBound="77.1" Name="Expr_BuildPatchPayload">
+            <om:Property Name="ShapeType" Value="Expression" />
+            <om:Property Name="Statement" Value="strPatchBody = &quot;{\&quot;status\&quot;:\&quot;Done\&quot;,\&quot;updatedBy\&quot;:\&quot;BizTalk\&quot;}&quot;;" />
+          </om:Element>
+
+          <!-- Expression 4: PATCH without certificate -->
+          <om:Element Type="Shape" OID="id-expr-patch-nocert" ParentLink="Shape_Statement" LowerBound="79.1" HigherBound="89.1" Name="Expr_Patch_NoCertificate">
+            <om:Property Name="ShapeType" Value="Expression" />
+            <om:Property Name="Statement" Value="strPatchResponse = Bham.BizTalk.Rest.PatchClient.PatchJsonWithApiKey(&quot;https://api.example.com/orders/&quot; + strOrderId, strPatchBody, &quot;x-api-key&quot;, strApiKey, 100);" />
+          </om:Element>
+
+          <!-- Expression 5: PATCH with certificate, default LocalMachine/My store -->
+          <om:Element Type="Shape" OID="id-expr-patch-defaultstore" ParentLink="Shape_Statement" LowerBound="91.1" HigherBound="101.1" Name="Expr_Patch_WithCertificate_DefaultStore">
+            <om:Property Name="ShapeType" Value="Expression" />
+            <om:Property Name="Statement" Value="strPatchResponse = Bham.BizTalk.Rest.PatchClient.PatchJsonWithClientCertAndApiKeyDefaultStore(&quot;https://api.example.com/orders/&quot; + strOrderId, strPatchBody, &quot;x-api-key&quot;, strApiKey, strCertThumbprint, 100);" />
+          </om:Element>
+        </om:Element>
+      </om:Element>
+    </om:Element>
+  </om:Element>
+
+  <om:Element Type="ModuleRef" OID="id-moduleref-import-1" LowerBound="1.1" HigherBound="140.1" Name="Bham_HelperClient_BizTalk_Module" Module="id-module-import-1" />
+</om:MetaModel>

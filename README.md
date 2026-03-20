@@ -55,6 +55,19 @@ This means test failures will fail the CI job and show directly on the commit/PR
 - `PatchClient.GetXmlWithClientCertAndApiKey(...)`
 - `PatchClient.PatchJsonWithClientCertAndApiKey(...)`
 - `PatchClient.PatchXmlWithClientCertAndApiKey(...)`
+- `PatchClient.GetJsonWithApiKey(...)` (no certificate)
+- `PatchClient.GetXmlWithApiKey(...)` (no certificate)
+- `PatchClient.PatchJsonWithApiKey(...)` (no certificate)
+- `PatchClient.PatchXmlWithApiKey(...)` (no certificate)
+- `PatchClient.GetJsonWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
+- `PatchClient.GetXmlWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
+- `PatchClient.PatchJsonWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
+- `PatchClient.PatchXmlWithClientCertAndApiKeyDefaultStore(...)` (uses `LocalMachine/My`)
+
+## BizTalk ODX samples
+- `samples/BizTalkRestClientSample.odx`: lightweight sample with Expression-shape statements for GET/PATCH.
+- `samples/BizTalkRestClientSample.DesignerStyle.odx`: designer-style sample with richer orchestration metadata.
+- `samples/Bham.HelperClient.ImportOriented.Template.odx`: import-oriented template with placeholders and multiple expression call patterns.
 
 ## Error handling and logging
 - GET and PATCH failures now surface as `BizTalkRestClientException`, including the HTTP method, URL, optional status code, and response body when one is available.
@@ -65,6 +78,8 @@ This means test failures will fail the CI job and show directly on the commit/PR
 - `certThumbprint` is optional on `GetJsonWithClientCertAndApiKey`, `GetXmlWithClientCertAndApiKey`, `PatchJsonWithClientCertAndApiKey`, and `PatchXmlWithClientCertAndApiKey`.
 - When a thumbprint is provided, the helper resolves and attaches that certificate from the configured store (`StoreLocation` + `StoreName`).
 - When no thumbprint is provided, the helper sends the request without a client certificate (API-key/header authentication only).
+- For BizTalk Expression shapes that cannot pass `null` or `""` cleanly, use the explicit no-certificate overloads: `GetJsonWithApiKey`, `GetXmlWithApiKey`, `PatchJsonWithApiKey`, `PatchXmlWithApiKey`.
+- For BizTalk Expression shapes that cannot pass enum values for certificate store/location, use the default-store overloads ending in `DefaultStore`.
 
 ## BizTalk compatibility note (.NET Framework 4.6.1)
 - The helper attaches client certificates to `HttpClientHandler` using reflection to support BizTalk projects where `ClientCertificates` is not visible at compile time due to `System.Net.Http` API-surface differences.
@@ -113,6 +128,27 @@ strGetResponse =
 		storeLocation: System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
 		storeName: System.Security.Cryptography.X509Certificates.StoreName.My,
 		timeoutSeconds: 100);
+```
+
+GET example (certificate, default store, BizTalk-friendly):
+```csharp
+strGetResponse =
+	Bham.BizTalk.Rest.PatchClient.GetJsonWithClientCertAndApiKeyDefaultStore(
+		"https://api.example.com/orders?customerId=" + strCustomerId + "&status=Open",
+		"x-api-key",
+		strApiKey,
+		strCertThumbprint,
+		100);
+```
+
+GET example (no certificate, BizTalk-friendly):
+```csharp
+strGetResponse =
+	Bham.BizTalk.Rest.PatchClient.GetJsonWithApiKey(
+		"https://api.example.com/orders?customerId=" + strCustomerId + "&status=Open",
+		"x-api-key",
+		strApiKey,
+		100);
 ```
 
 GET XML example:

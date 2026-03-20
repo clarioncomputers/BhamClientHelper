@@ -43,6 +43,53 @@ namespace Bham.BizTalk.Rest
         }
 
         /// <summary>
+        /// Sends a GET request with client certificate and API key header,
+        /// using the default certificate store (LocalMachine\My).
+        /// </summary>
+        public static string GetJsonWithClientCertAndApiKeyDefaultStore(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/json",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a GET request with API key header and no client certificate.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string GetJsonWithApiKey(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                null,
+                "application/json",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
         /// Sends a GET request with XML accept header, client certificate, and API key header.
         /// Returns response body as string; throws on non-success HTTP codes.
         /// </summary>
@@ -64,6 +111,53 @@ namespace Bham.BizTalk.Rest
                 "application/xml",
                 storeLocation,
                 storeName,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a GET request with XML accept header, client certificate, and API key header,
+        /// using the default certificate store (LocalMachine\My).
+        /// </summary>
+        public static string GetXmlWithClientCertAndApiKeyDefaultStore(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/xml",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a GET request with XML accept header, API key header, and no client certificate.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string GetXmlWithApiKey(
+            string url,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return GetWithClientCertAndApiKey(
+                url,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                null,
+                "application/xml",
+                StoreLocation.LocalMachine,
+                StoreName.My,
                 timeoutSeconds,
                 logger);
         }
@@ -98,6 +192,59 @@ namespace Bham.BizTalk.Rest
         }
 
         /// <summary>
+        /// Sends a PATCH request with JSON body, client certificate, and API key header,
+        /// using the default certificate store (LocalMachine\My).
+        /// </summary>
+        public static string PatchJsonWithClientCertAndApiKeyDefaultStore(
+            string url,
+            string jsonBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                jsonBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/json",
+                "application/json",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a PATCH request with JSON body and API key header, without a client certificate.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string PatchJsonWithApiKey(
+            string url,
+            string jsonBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                jsonBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                null,
+                "application/json",
+                "application/json",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
         /// Sends a PATCH request with XML body, XML accept header, client certificate, and API key header.
         /// Returns response body as string; throws on non-success HTTP codes.
         /// </summary>
@@ -122,6 +269,59 @@ namespace Bham.BizTalk.Rest
                 "application/xml",
                 storeLocation,
                 storeName,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a PATCH request with XML body, client certificate, and API key header,
+        /// using the default certificate store (LocalMachine\My).
+        /// </summary>
+        public static string PatchXmlWithClientCertAndApiKeyDefaultStore(
+            string url,
+            string xmlBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string certThumbprint,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                xmlBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                certThumbprint,
+                "application/xml",
+                "application/xml",
+                StoreLocation.LocalMachine,
+                StoreName.My,
+                timeoutSeconds,
+                logger);
+        }
+
+        /// <summary>
+        /// Sends a PATCH request with XML body and API key header, without a client certificate.
+        /// Returns response body as string; throws on non-success HTTP codes.
+        /// </summary>
+        public static string PatchXmlWithApiKey(
+            string url,
+            string xmlBody,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return PatchWithClientCertAndApiKey(
+                url,
+                xmlBody,
+                apiKeyHeaderName,
+                apiKeyHeaderValue,
+                null,
+                "application/xml",
+                "application/xml",
+                StoreLocation.LocalMachine,
+                StoreName.My,
                 timeoutSeconds,
                 logger);
         }
