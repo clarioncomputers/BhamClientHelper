@@ -51,6 +51,7 @@
     <Compile Include="BizTalkRestClient.cs" />
     <Compile Include="BizTalkRestDiagnostics.cs" />
     <Compile Include="GallagherApiClient.cs" />
+    <Compile Include="GallagherApiFacade.cs" />
     <Compile Include="GallagherApiResponseParser.cs" />
     <Compile Include="PatchClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

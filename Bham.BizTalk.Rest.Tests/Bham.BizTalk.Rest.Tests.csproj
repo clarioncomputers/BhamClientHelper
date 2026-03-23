@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="BizTalkRestClientTests.cs" />
     <Compile Include="GallagherApiClientTests.cs" />
+    <Compile Include="GallagherApiFacadeTests.cs" />
     <Compile Include="GallagherApiResponseParserTests.cs" />
     <Compile Include="TestRunner.cs" />
   </ItemGroup>
