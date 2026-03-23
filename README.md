@@ -13,6 +13,17 @@ BizTalk 2016 helper library that adds outbound REST support for HTTP GET and HTT
 ## Project output
 - `Bham.BizTalk.Rest.dll`
 
+## Assembly versioning (BizTalk deployments)
+- The project now declares explicit version metadata in [Bham.BizTalk.Rest/Properties/AssemblyInfo.cs](Bham.BizTalk.Rest/Properties/AssemblyInfo.cs).
+- Current values:
+	- `AssemblyVersion = 1.0.0.0`
+	- `AssemblyFileVersion = 1.0.0.0`
+	- `AssemblyInformationalVersion = 1.0.0`
+- Recommended release practice for BizTalk:
+	- Keep `AssemblyVersion` stable for non-breaking updates to reduce binding/GAC churn.
+	- Increment `AssemblyFileVersion` (and informational version) for every release.
+	- Increment `AssemblyVersion` only for deliberate breaking or side-by-side version changes.
+
 ## Build
 ```powershell
 dotnet build .\Bham.HelperClient.sln -c Release
