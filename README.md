@@ -73,6 +73,46 @@ This means test failures will fail the CI job and show directly on the commit/PR
 
 Copy the relevant block directly into a BizTalk Expression shape. Do not add the file to a project — it is reference only.
 
+## Gallagher API examples
+- `samples/GallagherApiSamples.cs` maps the requests in `Gallagher API.postman_collection.json` to this helper library.
+- `Bham.BizTalk.Rest.GallagherApiClient` is the typed wrapper for those Gallagher endpoints so callers do not need to hand-build URLs and PATCH bodies each time.
+- Included GET examples:
+	- `GET /api/personal_data_fields?name="ThirdPartyID"`
+	- `GET /api/cardholders?pdf_629="IDCARD.12345"`
+	- `GET /api/access_groups`
+	- `GET /api/access_groups?name="6040-CHAMBERLAIN-B-11703"`
+	- `GET /api/access_groups/663/cardholders`
+- Included PATCH examples:
+	- add access group to cardholder
+	- remove cardholder access group membership
+	- update cardholder access group date range
+- Main typed methods:
+	- `GetPersonalDataFieldsByName(...)`
+	- `ResolvePersonalDataFieldId(...)`
+	- `GetCardholdersByPdfValue(...)`
+	- `ResolveCardholderIdByPdfValue(...)`
+	- `GetAccessGroups()`
+	- `FindAccessGroupsByName(...)`
+	- `ResolveAccessGroupIdByName(...)`
+	- `GetAccessGroupCardholders(...)`
+	- `ResolveAccessGroupMembershipHref(...)`
+	- `AddAccessGroupToCardholder(...)`
+	- `RemoveAccessGroupFromCardholder(...)`
+	- `UpdateAccessGroupForCardholder(...)`
+- Parsing helpers are also available in `GallagherApiResponseParser` for callers that want to work with raw JSON responses and extract ids or membership hrefs directly.
+- The Postman collection uses the `Authorization` header for the API key, so set `ApiKeyHeaderName = "Authorization"` or pass `"Authorization"` into the `PatchClient` overloads.
+- The quoted query values from Postman, such as `"ThirdPartyID"`, are intentional. If you use `BizTalkRestClient.BuildUrl(...)` or `BizTalkRestClient.GetJson(...)` with query parameters, the helper will URL-encode those quotes for you.
+- The smoke-test console now supports Gallagher-specific commands using that wrapper. Example commands:
+	- `gallaghergetpdfid https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> ThirdPartyID`
+	- `gallaghergetcardholderid https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> IDCARD.12345`
+	- `gallaghersearchaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> 6040-CHAMBERLAIN-B-11703`
+	- `gallagheraddaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> 653 663 2026-04-01 2026-05-01`
+	- `gallagherremoveaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> 653 <membershipHref>`
+	- `gallagherupdateaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api <apiKey> 653 <membershipHref> 2026-04-01T00:00:00Z 2026-04-30T12:00:00Z`
+	- `gallagherworkflow --baseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api --apiKey <apiKey> --operation add --pdfValue IDCARD.12345 --accessGroupName 6040-CHAMBERLAIN-B-11703 --from 2026-04-01 --until 2026-05-01`
+	- `gallagherworkflow .\samples\gallagher-workflow.sample.json`
+- `gallagherworkflow` accepts either named arguments or a JSON config file. It can resolve `cardholderId` from `pdfValue`, resolve `accessGroupId` from `accessGroupName`, and resolve `membershipHref` from `accessGroupId` plus `cardholderId` before running add/remove/update.
+
 ## Error handling and logging
 - GET and PATCH failures now surface as `BizTalkRestClientException`, including the HTTP method, URL, optional status code, and response body when one is available.
 - `BizTalkRestClientSettings.Logger` accepts an `Action<BizTalkRestLogEntry>` so callers can forward start/success/failure events into BizTalk tracing, Event Log, or another sink.

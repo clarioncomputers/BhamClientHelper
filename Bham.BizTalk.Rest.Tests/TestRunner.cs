@@ -9,6 +9,14 @@ namespace Bham.BizTalk.Rest.Tests
             Run(nameof(BizTalkRestClientTests.BuildUrl_AppendsEncodedQueryParameters), BizTalkRestClientTests.BuildUrl_AppendsEncodedQueryParameters);
             Run(nameof(BizTalkRestClientTests.BuildUrl_AppendsWithAmpersand_WhenBaseAlreadyHasQuery), BizTalkRestClientTests.BuildUrl_AppendsWithAmpersand_WhenBaseAlreadyHasQuery);
             Run(nameof(BizTalkRestClientTests.GetJson_ThrowsArgumentException_WhenUrlIsNotHttpOrHttps), BizTalkRestClientTests.GetJson_ThrowsArgumentException_WhenUrlIsNotHttpOrHttps);
+            Run(nameof(GallagherApiClientTests.BuildQuotedQueryValue_WrapsAndTrimsValue), GallagherApiClientTests.BuildQuotedQueryValue_WrapsAndTrimsValue);
+            Run(nameof(GallagherApiClientTests.Constructor_ThrowsArgumentException_WhenBaseUrlIsNotHttpOrHttps), GallagherApiClientTests.Constructor_ThrowsArgumentException_WhenBaseUrlIsNotHttpOrHttps);
+            Run(nameof(GallagherApiClientTests.BuildAddAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildAddAccessGroupPatchBody_MatchesGallagherShape);
+            Run(nameof(GallagherApiClientTests.BuildRemoveAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildRemoveAccessGroupPatchBody_MatchesGallagherShape);
+            Run(nameof(GallagherApiClientTests.BuildUpdateAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildUpdateAccessGroupPatchBody_MatchesGallagherShape);
+            Run(nameof(GallagherApiResponseParserTests.GetFirstEntityId_FindsFirstNestedId), GallagherApiResponseParserTests.GetFirstEntityId_FindsFirstNestedId);
+            Run(nameof(GallagherApiResponseParserTests.GetEntityIdByName_FindsMatchingName), GallagherApiResponseParserTests.GetEntityIdByName_FindsMatchingName);
+            Run(nameof(GallagherApiResponseParserTests.GetAccessGroupMembershipHrefForCardholder_FindsMembershipHref), GallagherApiResponseParserTests.GetAccessGroupMembershipHrefForCardholder_FindsMembershipHref);
         }
 
         private static void Run(string name, Action test)

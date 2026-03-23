@@ -49,6 +49,51 @@ internal static class Program
 				return RunGetPublic(args, isXml: false);
 			}
 
+			if (mode == "gallaghergetpdfid")
+			{
+				return RunGallagherGetPdfId(args);
+			}
+
+			if (mode == "gallaghergetcardholderid")
+			{
+				return RunGallagherGetCardholderId(args);
+			}
+
+			if (mode == "gallaghergetaccessgroups")
+			{
+				return RunGallagherGetAccessGroups(args);
+			}
+
+			if (mode == "gallaghersearchaccessgroup")
+			{
+				return RunGallagherSearchAccessGroup(args);
+			}
+
+			if (mode == "gallaghergetaccessgroupcardholders")
+			{
+				return RunGallagherGetAccessGroupCardholders(args);
+			}
+
+			if (mode == "gallagheraddaccessgroup")
+			{
+				return RunGallagherAddAccessGroup(args);
+			}
+
+			if (mode == "gallagherremoveaccessgroup")
+			{
+				return RunGallagherRemoveAccessGroup(args);
+			}
+
+			if (mode == "gallagherupdateaccessgroup")
+			{
+				return RunGallagherUpdateAccessGroup(args);
+			}
+
+			if (mode == "gallagherworkflow")
+			{
+				return RunGallagherWorkflow(args);
+			}
+
 			if (mode == "getpublicxml")
 			{
 				return RunGetPublic(args, isXml: true);
@@ -208,6 +253,195 @@ internal static class Program
 
 		Console.WriteLine(isXml ? "PUBLIC PATCH XML succeeded." : "PUBLIC PATCH JSON succeeded.");
 		Console.WriteLine(responseText);
+		return 0;
+	}
+
+	private static int RunGallagherGetPdfId(string[] args)
+	{
+		// gallaghergetpdfid <baseUrl> <apiKey> <fieldName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher PDF ID lookup requires <baseUrl> <apiKey> <fieldName>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.GetPersonalDataFieldsByName(args[3]);
+
+		Console.WriteLine("Gallagher PDF ID lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherGetCardholderId(string[] args)
+	{
+		// gallaghergetcardholderid <baseUrl> <apiKey> <pdfValue> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher cardholder lookup requires <baseUrl> <apiKey> <pdfValue>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.GetCardholdersByPdfValue(args[3]);
+
+		Console.WriteLine("Gallagher cardholder lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherGetAccessGroups(string[] args)
+	{
+		// gallaghergetaccessgroups <baseUrl> <apiKey> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 3)
+		{
+			Console.Error.WriteLine("Gallagher access-group list requires <baseUrl> <apiKey>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 3);
+		var result = client.GetAccessGroups();
+
+		Console.WriteLine("Gallagher access-group list succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherSearchAccessGroup(string[] args)
+	{
+		// gallaghersearchaccessgroup <baseUrl> <apiKey> <groupName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher access-group search requires <baseUrl> <apiKey> <groupName>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.FindAccessGroupsByName(args[3]);
+
+		Console.WriteLine("Gallagher access-group search succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherGetAccessGroupCardholders(string[] args)
+	{
+		// gallaghergetaccessgroupcardholders <baseUrl> <apiKey> <accessGroupId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher access-group cardholders lookup requires <baseUrl> <apiKey> <accessGroupId>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.GetAccessGroupCardholders(args[3]);
+
+		Console.WriteLine("Gallagher access-group cardholders lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherAddAccessGroup(string[] args)
+	{
+		// gallagheraddaccessgroup <baseUrl> <apiKey> <cardholderId> <accessGroupId> <fromDate> <untilDate> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 7)
+		{
+			Console.Error.WriteLine("Gallagher add-access-group requires <baseUrl> <apiKey> <cardholderId> <accessGroupId> <fromDate> <untilDate>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 7);
+		var result = client.AddAccessGroupToCardholder(args[3], args[4], args[5], args[6]);
+
+		Console.WriteLine("Gallagher add access-group succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherRemoveAccessGroup(string[] args)
+	{
+		// gallagherremoveaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 5)
+		{
+			Console.Error.WriteLine("Gallagher remove-access-group requires <baseUrl> <apiKey> <cardholderId> <membershipHref>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 5);
+		var result = client.RemoveAccessGroupFromCardholder(args[3], args[4]);
+
+		Console.WriteLine("Gallagher remove access-group succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherUpdateAccessGroup(string[] args)
+	{
+		// gallagherupdateaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> <fromUtc> <untilUtc> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 7)
+		{
+			Console.Error.WriteLine("Gallagher update-access-group requires <baseUrl> <apiKey> <cardholderId> <membershipHref> <fromUtc> <untilUtc>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 7);
+		var result = client.UpdateAccessGroupForCardholder(args[3], args[4], args[5], args[6]);
+
+		Console.WriteLine("Gallagher update access-group succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherWorkflow(string[] args)
+	{
+		var options = ParseGallagherWorkflowOptions(args);
+		var client = CreateGallagherClientFromWorkflowOptions(options);
+
+		var cardholderId = ResolveCardholderId(options, client);
+		var accessGroupId = ResolveAccessGroupId(options, client);
+		var membershipHref = ResolveMembershipHref(options, client, accessGroupId, cardholderId);
+		string result;
+
+		switch (options.Operation)
+		{
+			case "add":
+				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(accessGroupId, "accessGroupId or accessGroupName");
+				EnsureValue(options.From, "from");
+				EnsureValue(options.Until, "until");
+				result = client.AddAccessGroupToCardholder(cardholderId, accessGroupId, options.From, options.Until);
+				Console.WriteLine("Gallagher workflow add succeeded.");
+				break;
+			case "remove":
+				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(membershipHref, "membershipHref or accessGroupId/accessGroupName for membership lookup");
+				result = client.RemoveAccessGroupFromCardholder(cardholderId, membershipHref);
+				Console.WriteLine("Gallagher workflow remove succeeded.");
+				break;
+			case "update":
+				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(membershipHref, "membershipHref or accessGroupId/accessGroupName for membership lookup");
+				EnsureValue(options.From, "from");
+				EnsureValue(options.Until, "until");
+				result = client.UpdateAccessGroupForCardholder(cardholderId, membershipHref, options.From, options.Until);
+				Console.WriteLine("Gallagher workflow update succeeded.");
+				break;
+			default:
+				throw new ArgumentException("Gallagher workflow operation must be add, remove, or update.");
+		}
+
+		Console.WriteLine("Resolved cardholderId=" + (cardholderId ?? "<none>"));
+		Console.WriteLine("Resolved accessGroupId=" + (accessGroupId ?? "<none>"));
+		Console.WriteLine("Resolved membershipHref=" + (membershipHref ?? "<none>"));
+		Console.WriteLine(result);
 		return 0;
 	}
 
@@ -424,6 +658,272 @@ internal static class Program
 		};
 	}
 
+	private static GallagherApiClient CreateGallagherClient(string[] args, int baseUrlIndex, int apiKeyIndex, int optionalSettingsIndex)
+	{
+		if (args.Length <= baseUrlIndex || args.Length <= apiKeyIndex)
+		{
+			throw new ArgumentException("Missing Gallagher base URL or API key.");
+		}
+
+		var settings = new BizTalkRestClientSettings
+		{
+			ApiKeyHeaderName = "Authorization",
+			ApiKeyHeaderValue = args[apiKeyIndex],
+			CertThumbprint = ParseOptionalString(args, optionalSettingsIndex),
+			StoreLocation = ParseStoreLocation(args, optionalSettingsIndex + 1, StoreLocation.LocalMachine),
+			StoreName = ParseStoreName(args, optionalSettingsIndex + 2, StoreName.My),
+			TimeoutSeconds = ParseInt(args, optionalSettingsIndex + 3, 100),
+			Logger = WriteLog
+		};
+
+		return new GallagherApiClient(args[baseUrlIndex], settings);
+	}
+
+	private static GallagherApiClient CreateGallagherClientFromWorkflowOptions(GallagherWorkflowOptions options)
+	{
+		return new GallagherApiClient(
+			options.BaseUrl,
+			new BizTalkRestClientSettings
+			{
+				ApiKeyHeaderName = "Authorization",
+				ApiKeyHeaderValue = options.ApiKey,
+				CertThumbprint = options.Thumbprint,
+				StoreLocation = options.StoreLocation,
+				StoreName = options.StoreName,
+				TimeoutSeconds = options.TimeoutSeconds,
+				Logger = WriteLog
+			});
+	}
+
+	private static GallagherWorkflowOptions ParseGallagherWorkflowOptions(string[] args)
+	{
+		var namedArguments = ParseNamedArguments(args, 1);
+		var configPath = GetNamedArgument(namedArguments, "config");
+		if (string.IsNullOrWhiteSpace(configPath) && args.Length == 2 && File.Exists(args[1]))
+		{
+			configPath = args[1];
+		}
+
+		var options = !string.IsNullOrWhiteSpace(configPath)
+			? LoadGallagherWorkflowOptionsFromFile(configPath)
+			: new GallagherWorkflowOptions();
+
+		ApplyNamedArguments(options, namedArguments);
+		ValidateGallagherWorkflowOptions(options);
+		return options;
+	}
+
+	private static Dictionary<string, string> ParseNamedArguments(string[] args, int startIndex)
+	{
+		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		for (var i = startIndex; i < args.Length; i++)
+		{
+			var current = args[i];
+			if (string.IsNullOrWhiteSpace(current) || !current.StartsWith("--", StringComparison.Ordinal))
+			{
+				continue;
+			}
+
+			var key = current.Substring(2);
+			if (string.IsNullOrWhiteSpace(key))
+			{
+				continue;
+			}
+
+			var value = i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal)
+				? args[++i]
+				: "true";
+
+			result[key] = value;
+		}
+
+		return result;
+	}
+
+	private static GallagherWorkflowOptions LoadGallagherWorkflowOptionsFromFile(string configPath)
+	{
+		if (string.IsNullOrWhiteSpace(configPath))
+		{
+			throw new ArgumentNullException(nameof(configPath));
+		}
+
+		var fullPath = Path.GetFullPath(configPath);
+		var json = File.ReadAllText(fullPath);
+		var dictionary = GallagherApiResponseParser.DeserializeJsonObject(json);
+		var options = new GallagherWorkflowOptions();
+		ApplyDictionary(options, dictionary);
+		return options;
+	}
+
+	private static void ApplyNamedArguments(GallagherWorkflowOptions options, IDictionary<string, string> namedArguments)
+	{
+		if (options == null) throw new ArgumentNullException(nameof(options));
+		if (namedArguments == null) return;
+
+		ApplyValue(options, "baseUrl", GetNamedArgument(namedArguments, "baseUrl"));
+		ApplyValue(options, "apiKey", GetNamedArgument(namedArguments, "apiKey"));
+		ApplyValue(options, "operation", GetNamedArgument(namedArguments, "operation"));
+		ApplyValue(options, "pdfValue", GetNamedArgument(namedArguments, "pdfValue"));
+		ApplyValue(options, "pdfFieldKey", GetNamedArgument(namedArguments, "pdfFieldKey"));
+		ApplyValue(options, "cardholderId", GetNamedArgument(namedArguments, "cardholderId"));
+		ApplyValue(options, "accessGroupName", GetNamedArgument(namedArguments, "accessGroupName"));
+		ApplyValue(options, "accessGroupId", GetNamedArgument(namedArguments, "accessGroupId"));
+		ApplyValue(options, "membershipHref", GetNamedArgument(namedArguments, "membershipHref"));
+		ApplyValue(options, "from", GetNamedArgument(namedArguments, "from"));
+		ApplyValue(options, "until", GetNamedArgument(namedArguments, "until"));
+		ApplyValue(options, "thumbprint", GetNamedArgument(namedArguments, "thumbprint"));
+		ApplyValue(options, "storeLocation", GetNamedArgument(namedArguments, "storeLocation"));
+		ApplyValue(options, "storeName", GetNamedArgument(namedArguments, "storeName"));
+		ApplyValue(options, "timeoutSeconds", GetNamedArgument(namedArguments, "timeoutSeconds"));
+	}
+
+	private static void ApplyDictionary(GallagherWorkflowOptions options, IDictionary<string, object> values)
+	{
+		if (options == null) throw new ArgumentNullException(nameof(options));
+		if (values == null) return;
+
+		foreach (var pair in values)
+		{
+			ApplyValue(options, pair.Key, pair.Value == null ? null : Convert.ToString(pair.Value));
+		}
+	}
+
+	private static void ApplyValue(GallagherWorkflowOptions options, string key, string value)
+	{
+		if (options == null || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
+		{
+			return;
+		}
+
+		switch (key.Trim().ToLowerInvariant())
+		{
+			case "baseurl":
+				options.BaseUrl = value;
+				break;
+			case "apikey":
+				options.ApiKey = value;
+				break;
+			case "operation":
+				options.Operation = value;
+				break;
+			case "pdfvalue":
+				options.PdfValue = value;
+				break;
+			case "pdffieldkey":
+				options.PdfFieldKey = value;
+				break;
+			case "cardholderid":
+				options.CardholderId = value;
+				break;
+			case "accessgroupname":
+				options.AccessGroupName = value;
+				break;
+			case "accessgroupid":
+				options.AccessGroupId = value;
+				break;
+			case "membershiphref":
+				options.MembershipHref = value;
+				break;
+			case "from":
+				options.From = value;
+				break;
+			case "until":
+				options.Until = value;
+				break;
+			case "thumbprint":
+				options.Thumbprint = value;
+				break;
+			case "storelocation":
+				options.StoreLocation = ParseStoreLocation(new[] { string.Empty, value }, 1, options.StoreLocation);
+				break;
+			case "storename":
+				options.StoreName = ParseStoreName(new[] { string.Empty, value }, 1, options.StoreName);
+				break;
+			case "timeoutseconds":
+				options.TimeoutSeconds = ParseInt(new[] { string.Empty, value }, 1, options.TimeoutSeconds);
+				break;
+		}
+	}
+
+	private static string ResolveCardholderId(GallagherWorkflowOptions options, GallagherApiClient client)
+	{
+		if (!string.IsNullOrWhiteSpace(options.CardholderId))
+		{
+			return options.CardholderId;
+		}
+
+		if (!string.IsNullOrWhiteSpace(options.PdfValue))
+		{
+			return client.ResolveCardholderIdByPdfValue(options.PdfValue, options.PdfFieldKey);
+		}
+
+		return null;
+	}
+
+	private static string ResolveAccessGroupId(GallagherWorkflowOptions options, GallagherApiClient client)
+	{
+		if (!string.IsNullOrWhiteSpace(options.AccessGroupId))
+		{
+			return options.AccessGroupId;
+		}
+
+		if (!string.IsNullOrWhiteSpace(options.AccessGroupName))
+		{
+			return client.ResolveAccessGroupIdByName(options.AccessGroupName);
+		}
+
+		return null;
+	}
+
+	private static string ResolveMembershipHref(GallagherWorkflowOptions options, GallagherApiClient client, string accessGroupId, string cardholderId)
+	{
+		if (!string.IsNullOrWhiteSpace(options.MembershipHref))
+		{
+			return options.MembershipHref;
+		}
+
+		if (!string.IsNullOrWhiteSpace(accessGroupId) && !string.IsNullOrWhiteSpace(cardholderId))
+		{
+			return client.ResolveAccessGroupMembershipHref(accessGroupId, cardholderId);
+		}
+
+		return null;
+	}
+
+	private static void ValidateGallagherWorkflowOptions(GallagherWorkflowOptions options)
+	{
+		if (options == null) throw new ArgumentNullException(nameof(options));
+		EnsureValue(options.BaseUrl, "baseUrl");
+		EnsureValue(options.ApiKey, "apiKey");
+		EnsureValue(options.Operation, "operation");
+
+		var operation = options.Operation.Trim().ToLowerInvariant();
+		if (operation != "add" && operation != "remove" && operation != "update")
+		{
+			throw new ArgumentException("Gallagher workflow operation must be add, remove, or update.");
+		}
+
+		options.Operation = operation;
+		if (string.IsNullOrWhiteSpace(options.PdfFieldKey))
+		{
+			options.PdfFieldKey = "pdf_629";
+		}
+	}
+
+	private static string GetNamedArgument(IDictionary<string, string> namedArguments, string key)
+	{
+		string value;
+		return namedArguments != null && namedArguments.TryGetValue(key, out value) ? value : null;
+	}
+
+	private static void EnsureValue(string value, string name)
+	{
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			throw new ArgumentException("Missing required Gallagher workflow value: " + name + ".");
+		}
+	}
+
 	private static void WriteLog(BizTalkRestLogEntry entry)
 	{
 		if (entry == null)
@@ -510,6 +1010,16 @@ internal static class Program
 		return int.TryParse(args[index], out value) ? value : fallback;
 	}
 
+	private static string ParseOptionalString(string[] args, int index)
+	{
+		if (args.Length <= index || string.IsNullOrWhiteSpace(args[index]) || args[index] == "-")
+		{
+			return null;
+		}
+
+		return args[index];
+	}
+
 	private static void PrintUsage()
 	{
 		Console.WriteLine("Usage:");
@@ -521,6 +1031,16 @@ internal static class Program
 		Console.WriteLine("  getpublicxml <baseUrl> <queryStringOrDash> [timeoutSeconds]");
 		Console.WriteLine("  patchpublicjson <url> <jsonBody> [timeoutSeconds]");
 		Console.WriteLine("  patchpublicxml <url> <xmlBody> [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetpdfid <baseUrl> <apiKey> <fieldName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetcardholderid <baseUrl> <apiKey> <pdfValue> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetaccessgroups <baseUrl> <apiKey> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghersearchaccessgroup <baseUrl> <apiKey> <groupName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetaccessgroupcardholders <baseUrl> <apiKey> <accessGroupId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallagheraddaccessgroup <baseUrl> <apiKey> <cardholderId> <accessGroupId> <fromDate> <untilDate> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallagherremoveaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallagherupdateaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> <fromUtc> <untilUtc> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallagherworkflow <configPath>");
+		Console.WriteLine("  gallagherworkflow --baseUrl <url> --apiKey <key> --operation <add|remove|update> [--pdfValue <value>] [--pdfFieldKey <field>] [--cardholderId <id>] [--accessGroupName <name>] [--accessGroupId <id>] [--membershipHref <href>] [--from <date>] [--until <date>] [--thumbprint <thumbprint>] [--storeLocation <location>] [--storeName <name>] [--timeoutSeconds <seconds>]");
 		Console.WriteLine("  scenariomissingcert [url] [apiHeaderName] [apiHeaderValue] [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  scenariotimeoutpublic [delayMilliseconds] [timeoutSeconds]");
 		Console.WriteLine("  scenariotimeoutpublicxml [delayMilliseconds] [timeoutSeconds]");
@@ -538,6 +1058,14 @@ internal static class Program
 		Console.WriteLine("  patchxml https://api.example.com/items/{id} \"<request><status>Done</status></request>\" x-api-key abc123 001122... LocalMachine My 100");
 		Console.WriteLine("  getpublicjson https://jsonplaceholder.typicode.com/posts \"userId=1\" 100");
 		Console.WriteLine("  patchpublicjson https://httpbin.org/patch \"{\"\"status\"\":\"\"Done\"\"}\" 100");
+		Console.WriteLine("  gallaghergetpdfid https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 ThirdPartyID");
+		Console.WriteLine("  gallaghergetcardholderid https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 IDCARD.12345");
+		Console.WriteLine("  gallaghersearchaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 6040-CHAMBERLAIN-B-11703");
+		Console.WriteLine("  gallagheraddaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 663 2026-04-01 2026-05-01");
+		Console.WriteLine("  gallagherremoveaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 https://its-d-cdx-01.adf.bham.ac.uk:8904/api/cardholders/653/access_groups/d64caab7bc5e42e8a193bd0e8b166b0b");
+		Console.WriteLine("  gallagherupdateaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 https://its-d-cdx-01.adf.bham.ac.uk:8904/api/cardholders/653/access_groups/2db46206474148c2878cca647ce74668 2026-04-01T00:00:00Z 2026-04-30T12:00:00Z");
+		Console.WriteLine("  gallagherworkflow --baseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api --apiKey 2133-6820-E746-11CC-52D2-3417-CF15-2482 --operation add --pdfValue IDCARD.12345 --accessGroupName 6040-CHAMBERLAIN-B-11703 --from 2026-04-01 --until 2026-05-01");
+		Console.WriteLine("  gallagherworkflow .\\samples\\gallagher-workflow.sample.json");
 		Console.WriteLine("  scenariomissingcert");
 		Console.WriteLine("  scenariotimeoutpublic 5000 1");
 		Console.WriteLine("  scenariotimeoutpublicxml 5000 1");
@@ -645,5 +1173,24 @@ internal static class Program
 				listener.Stop();
 			}
 		}
+	}
+
+	private sealed class GallagherWorkflowOptions
+	{
+		public string BaseUrl { get; set; }
+		public string ApiKey { get; set; }
+		public string Operation { get; set; }
+		public string PdfValue { get; set; }
+		public string PdfFieldKey { get; set; }
+		public string CardholderId { get; set; }
+		public string AccessGroupName { get; set; }
+		public string AccessGroupId { get; set; }
+		public string MembershipHref { get; set; }
+		public string From { get; set; }
+		public string Until { get; set; }
+		public string Thumbprint { get; set; }
+		public StoreLocation StoreLocation { get; set; } = StoreLocation.LocalMachine;
+		public StoreName StoreName { get; set; } = StoreName.My;
+		public int TimeoutSeconds { get; set; } = 100;
 	}
 }

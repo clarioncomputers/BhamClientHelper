@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('getpublicjson', 'patchpublicjson', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
+    [ValidateSet('getpublicjson', 'patchpublicjson', 'gallagherworkflow', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
     [string]$Mode,
 
     [string]$Url = 'https://httpstat.us/503',
@@ -23,11 +23,43 @@ param(
     [string]$ApiHeaderValue = 'smoke-test',
 
     [string]$Thumbprint = '0000000000000000000000000000000000000000'
+
+    ,
+
+    [string]$BaseUrl,
+
+    [string]$ApiKey,
+
+    [ValidateSet('add', 'remove', 'update')]
+    [string]$Operation,
+
+    [string]$PdfValue,
+
+    [string]$PdfFieldKey = 'pdf_629',
+
+    [string]$CardholderId,
+
+    [string]$AccessGroupName,
+
+    [string]$AccessGroupId,
+
+    [string]$MembershipHref,
+
+    [string]$From,
+
+    [string]$Until,
+
+    [string]$ConfigPath,
+
+    [ValidateSet('LocalMachine', 'CurrentUser')]
+    [string]$StoreLocation = 'LocalMachine',
+
+    [string]$StoreName = 'My'
 )
 
 $ErrorActionPreference = 'Stop'
 
-function Ensure-SmokeTestExecutable {
+function Initialize-SmokeTestExecutable {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectPath,
@@ -106,13 +138,30 @@ function Invoke-SmokeTestMode {
         [string[]]$Arguments
     )
 
+    $stdoutPath = [System.IO.Path]::GetTempFileName()
+    $stderrPath = [System.IO.Path]::GetTempFileName()
+
     try {
-        & $ExecutablePath @Arguments
-        return $LASTEXITCODE
-    }
-    catch {
-        if ($_.Exception.Message -notmatch 'Access is denied') {
-            throw
+        try {
+            $process = Start-Process -FilePath $ExecutablePath -ArgumentList $Arguments -Wait -NoNewWindow -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -ErrorAction Stop
+
+            $stdout = Get-Content -Path $stdoutPath -Raw -ErrorAction SilentlyContinue
+            $stderr = Get-Content -Path $stderrPath -Raw -ErrorAction SilentlyContinue
+
+            if (-not [string]::IsNullOrWhiteSpace($stdout)) {
+                Write-Host $stdout.TrimEnd()
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($stderr)) {
+                Write-Error $stderr.TrimEnd()
+            }
+
+            return $process.ExitCode
+        }
+        catch {
+            if ($_.Exception.Message -notmatch 'Access is denied') {
+                throw
+            }
         }
 
         # Some environments block direct EXE launch from the workspace.
@@ -130,8 +179,9 @@ function Invoke-SmokeTestMode {
                 throw (New-SmokeExecutableAccessException -ExecutablePath $ExecutablePath -Detail $_.Exception.Message)
             }
         }
+
         $entryPoint = $assembly.EntryPoint
-        if ($entryPoint -eq $null) {
+        if ($null -eq $entryPoint) {
             throw "Smoke test assembly has no entry point: $ExecutablePath"
         }
 
@@ -141,6 +191,9 @@ function Invoke-SmokeTestMode {
         }
 
         return 0
+    }
+    finally {
+        Remove-Item -Path $stdoutPath, $stderrPath -ErrorAction SilentlyContinue
     }
 }
 
@@ -211,7 +264,7 @@ if ($Mode -eq 'patchpublicjson') {
 $projectPath = Join-Path $PSScriptRoot '..\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj'
 $executablePath = Join-Path $PSScriptRoot ("..\Bham.BizTalk.Rest.SmokeTest\bin\{0}\Bham.BizTalk.Rest.SmokeTest.exe" -f $Configuration)
 
-Ensure-SmokeTestExecutable -ProjectPath $projectPath -ExecutablePath $executablePath -BuildConfiguration $Configuration
+Initialize-SmokeTestExecutable -ProjectPath $projectPath -ExecutablePath $executablePath -BuildConfiguration $Configuration
 Test-SmokeExecutableAccess -ExecutablePath $executablePath
 
 if ($Mode -eq 'scenariomissingcert') {
@@ -256,5 +309,91 @@ if ($Mode -eq 'runfailurescenarios') {
 
 if ($Mode -eq 'runfailurescenariosxml') {
     $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments @('runfailurescenariosxml', $Url)
+    exit $exitCode
+}
+
+if ($Mode -eq 'gallagherworkflow') {
+    $arguments = New-Object System.Collections.Generic.List[string]
+    $arguments.Add('gallagherworkflow')
+
+    if (-not [string]::IsNullOrWhiteSpace($ConfigPath)) {
+        $arguments.Add('--config')
+        $arguments.Add($ConfigPath)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($BaseUrl)) {
+        $arguments.Add('--baseUrl')
+        $arguments.Add($BaseUrl)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ApiKey)) {
+        $arguments.Add('--apiKey')
+        $arguments.Add($ApiKey)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Operation)) {
+        $arguments.Add('--operation')
+        $arguments.Add($Operation)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($PdfValue)) {
+        $arguments.Add('--pdfValue')
+        $arguments.Add($PdfValue)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($PdfFieldKey)) {
+        $arguments.Add('--pdfFieldKey')
+        $arguments.Add($PdfFieldKey)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($CardholderId)) {
+        $arguments.Add('--cardholderId')
+        $arguments.Add($CardholderId)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($AccessGroupName)) {
+        $arguments.Add('--accessGroupName')
+        $arguments.Add($AccessGroupName)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($AccessGroupId)) {
+        $arguments.Add('--accessGroupId')
+        $arguments.Add($AccessGroupId)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($MembershipHref)) {
+        $arguments.Add('--membershipHref')
+        $arguments.Add($MembershipHref)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($From)) {
+        $arguments.Add('--from')
+        $arguments.Add($From)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Until)) {
+        $arguments.Add('--until')
+        $arguments.Add($Until)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Thumbprint)) {
+        $arguments.Add('--thumbprint')
+        $arguments.Add($Thumbprint)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($StoreLocation)) {
+        $arguments.Add('--storeLocation')
+        $arguments.Add($StoreLocation)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($StoreName)) {
+        $arguments.Add('--storeName')
+        $arguments.Add($StoreName)
+    }
+
+    $arguments.Add('--timeoutSeconds')
+    $arguments.Add([string]$TimeoutSeconds)
+
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments $arguments.ToArray()
     exit $exitCode
 }
