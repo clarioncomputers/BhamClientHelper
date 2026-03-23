@@ -338,6 +338,26 @@ strResponse = gallagher.GetAccessGroupById("663");
 strResponse = gallagher.GetCardholderAccessGroups("653");
 ```
 
+Expression shape F (certificate thumbprint example, BizTalk-friendly):
+```csharp
+// Set up settings with certificate thumbprint from SSO/config
+Bham.BizTalk.Rest.BizTalkRestClientSettings settings = null;
+settings = new Bham.BizTalk.Rest.BizTalkRestClientSettings();
+settings.ApiKeyHeaderName = "Authorization";
+settings.ApiKeyHeaderValue = strApiKey;
+settings.CertThumbprint = strCertThumbprint;  // e.g., "ABC123DEF456..." from SSO
+settings.TimeoutSeconds = 100;
+
+// Call directly via PatchClient with thumbprint
+strGetResponse =
+	Bham.BizTalk.Rest.PatchClient.GetJsonWithClientCertAndApiKeyDefaultStore(
+		strGallagherBaseUrl + "/cardholders/" + strCardholderId,
+		"Authorization",
+		strApiKey,
+		strCertThumbprint,
+		100);
+```
+
 Typical orchestration variables:
 - `strGetResponse`
 - `strGetXmlResponse`
@@ -394,6 +414,67 @@ catch (BizTalkRestClientException ex)
 	Console.Error.WriteLine(ex.Message);
 }
 ```
+
+## JSON response parsing
+`GallagherApiResponseParser` provides dependency-free methods to extract data from Gallagher API responses without external JSON libraries (works on .NET 4.6.1).
+
+Example: extract cardholder ID from GetCardholders response:
+```csharp
+var cardholderJson = client.GetJson("https://api.example.com/cardholders?pdf_629=%22" + pdfValue + "%22");
+var cardholderId = Bham.BizTalk.Rest.GallagherApiResponseParser.GetEntityIdByName(cardholderJson, null);
+```
+
+Example: find access group membership href by cardholder name and date range:
+```csharp
+var membershipJson = client.GetJson("https://api.example.com/access_groups/663/cardholders");
+var found = Bham.BizTalk.Rest.GallagherApiResponseParser.TryGetAccessGroupMembershipHrefByNameAndDates(
+	membershipJson,
+	"John Smith",         // cardholder name (exact match, case-insensitive)
+	"2026-04-01",         // from date (optional, null to skip)
+	"2026-05-01",         // until date (optional, null to skip)
+	out string href);     // membership href output
+
+if (found)
+{
+	Console.WriteLine("Found membership href: " + href);
+}
+else
+{
+	Console.WriteLine("No matching membership found");
+}
+```
+
+Example: parse date-flexible membership search in BizTalk Expression shape:
+```csharp
+// strMembershipJson = GetAccessGroupCardholders response containing multiple cardholder records
+// strCardholderName = "John Smith" (to search for)
+// strFromDate = "2026-04-01" (optional; can be null to skip date filtering)
+// strUntilDate = "2026-05-01" (optional; can be null to skip date filtering)
+
+boolean bFound = false;
+string strMembershipHref = "";
+
+if (Bham.BizTalk.Rest.GallagherApiResponseParser.TryGetAccessGroupMembershipHrefByNameAndDates(
+	strMembershipJson,
+	strCardholderName,
+	strFromDate,
+	strUntilDate,
+	out strMembershipHref))
+{
+	bFound = true;
+}
+else
+{
+	// Handle no match found
+}
+```
+
+Parser methods available:
+- `GetFirstEntityId(json)` – extracts the first `id` field from nested objects
+- `GetEntityIdByName(json, name)` – finds first object with matching `name` field, returns its `id`
+- `GetAccessGroupMembershipHrefForCardholder(json, cardholderId)` – searches for membership with matching `cardholderId`, returns `href`
+- `GetAccessGroupMembershipHrefByNameAndDates(json, cardholderName, fromDate, untilDate)` – finds membership by name and optional date range, returns `href`
+- `TryGetAccessGroupMembershipHrefByNameAndDates(json, cardholderName, fromDate, untilDate, out href)` – Try-pattern version, returns bool
 
 ## Strong name and GAC (when you are ready)
 1. Create an SNK file in the project folder:
