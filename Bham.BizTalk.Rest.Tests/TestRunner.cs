@@ -21,6 +21,8 @@ namespace Bham.BizTalk.Rest.Tests
             Run(nameof(GallagherApiResponseParserTests.GetFirstEntityId_FindsFirstNestedId), GallagherApiResponseParserTests.GetFirstEntityId_FindsFirstNestedId);
             Run(nameof(GallagherApiResponseParserTests.GetEntityIdByName_FindsMatchingName), GallagherApiResponseParserTests.GetEntityIdByName_FindsMatchingName);
             Run(nameof(GallagherApiResponseParserTests.GetAccessGroupMembershipHrefForCardholder_FindsMembershipHref), GallagherApiResponseParserTests.GetAccessGroupMembershipHrefForCardholder_FindsMembershipHref);
+            Run(nameof(GallagherApiResponseParserTests.GetAccessGroupMembershipHrefByNameAndDates_FindsMatchingRecord), GallagherApiResponseParserTests.GetAccessGroupMembershipHrefByNameAndDates_FindsMatchingRecord);
+            Run(nameof(GallagherApiResponseParserTests.TryGetAccessGroupMembershipHrefByNameAndDates_AllowsNameOnlyFilter), GallagherApiResponseParserTests.TryGetAccessGroupMembershipHrefByNameAndDates_AllowsNameOnlyFilter);
         }
 
         private static void Run(string name, Action test)

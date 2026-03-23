@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace Bham.BizTalk.Rest
@@ -115,6 +116,57 @@ namespace Bham.BizTalk.Rest
             }, out href);
         }
 
+        public static string GetAccessGroupMembershipHrefByNameAndDates(string responseJson, string cardholderName, string fromDate = null, string untilDate = null)
+        {
+            string href;
+            if (!TryGetAccessGroupMembershipHrefByNameAndDates(responseJson, cardholderName, fromDate, untilDate, out href))
+            {
+                throw new InvalidOperationException("No Gallagher access-group membership href was found for the requested cardholder name/date criteria.");
+            }
+
+            return href;
+        }
+
+        public static bool TryGetAccessGroupMembershipHrefByNameAndDates(string responseJson, string cardholderName, string fromDate, string untilDate, out string href)
+        {
+            if (string.IsNullOrWhiteSpace(cardholderName)) throw new ArgumentNullException(nameof(cardholderName));
+
+            var expectedName = cardholderName.Trim();
+            var expectedFrom = string.IsNullOrWhiteSpace(fromDate) ? null : fromDate.Trim();
+            var expectedUntil = string.IsNullOrWhiteSpace(untilDate) ? null : untilDate.Trim();
+
+            return TryGetFirstMatchingValue(responseJson, delegate(IDictionary<string, object> item)
+            {
+                string itemHref;
+                if (!TryGetString(item, "href", out itemHref) ||
+                    itemHref.IndexOf("/access_groups/", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    return null;
+                }
+
+                string actualName;
+                if (!TryGetMembershipCardholderName(item, out actualName) ||
+                    !string.Equals(actualName, expectedName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                string actualFrom;
+                if (expectedFrom != null && (!TryGetString(item, "from", out actualFrom) || !DatesMatch(actualFrom, expectedFrom)))
+                {
+                    return null;
+                }
+
+                string actualUntil;
+                if (expectedUntil != null && (!TryGetString(item, "until", out actualUntil) || !DatesMatch(actualUntil, expectedUntil)))
+                {
+                    return null;
+                }
+
+                return itemHref;
+            }, out href);
+        }
+
         private static bool TryGetFirstMatchingValue(string responseJson, Func<IDictionary<string, object>, string> selector, out string value)
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
@@ -206,6 +258,58 @@ namespace Bham.BizTalk.Rest
 
             value = Convert.ToString(rawValue);
             return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static bool TryGetMembershipCardholderName(IDictionary<string, object> item, out string name)
+        {
+            name = null;
+
+            if (TryGetString(item, "name", out name))
+            {
+                return true;
+            }
+
+            object nestedCardholder;
+            IDictionary<string, object> cardholderObject;
+            if (item != null && item.TryGetValue("cardholder", out nestedCardholder) &&
+                (cardholderObject = nestedCardholder as IDictionary<string, object>) != null)
+            {
+                return TryGetString(cardholderObject, "name", out name);
+            }
+
+            return false;
+        }
+
+        private static bool DatesMatch(string actual, string expected)
+        {
+            if (string.IsNullOrWhiteSpace(actual) || string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            var actualTrimmed = actual.Trim();
+            var expectedTrimmed = expected.Trim();
+
+            if (string.Equals(actualTrimmed, expectedTrimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            DateTimeOffset actualDate;
+            DateTimeOffset expectedDate;
+            if (!DateTimeOffset.TryParse(actualTrimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AllowWhiteSpaces, out actualDate) ||
+                !DateTimeOffset.TryParse(expectedTrimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AllowWhiteSpaces, out expectedDate))
+            {
+                return false;
+            }
+
+            if (expectedTrimmed.IndexOf("T", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                expectedTrimmed.IndexOf(":", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return actualDate.ToUniversalTime() == expectedDate.ToUniversalTime();
+            }
+
+            return actualDate.UtcDateTime.Date == expectedDate.UtcDateTime.Date;
         }
 
         private sealed class JsonParser
