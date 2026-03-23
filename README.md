@@ -87,13 +87,19 @@ Copy the relevant block directly into a BizTalk Expression shape. Do not add the
 	- remove cardholder access group membership
 	- update cardholder access group date range
 - Main typed methods:
+	- `GetPersonalDataFields()`
 	- `GetPersonalDataFieldsByName(...)`
+	- `GetPersonalDataFieldById(...)`
 	- `ResolvePersonalDataFieldId(...)`
+	- `GetCardholders()`
 	- `GetCardholdersByPdfValue(...)`
+	- `GetCardholderById(...)`
 	- `ResolveCardholderIdByPdfValue(...)`
 	- `GetAccessGroups()`
+	- `GetAccessGroupById(...)`
 	- `FindAccessGroupsByName(...)`
 	- `ResolveAccessGroupIdByName(...)`
+	- `GetCardholderAccessGroups(...)`
 	- `GetAccessGroupCardholders(...)`
 	- `ResolveAccessGroupMembershipHref(...)`
 	- `AddAccessGroupToCardholder(...)`

@@ -11,6 +11,10 @@ namespace Bham.BizTalk.Rest.Tests
             Run(nameof(BizTalkRestClientTests.GetJson_ThrowsArgumentException_WhenUrlIsNotHttpOrHttps), BizTalkRestClientTests.GetJson_ThrowsArgumentException_WhenUrlIsNotHttpOrHttps);
             Run(nameof(GallagherApiClientTests.BuildQuotedQueryValue_WrapsAndTrimsValue), GallagherApiClientTests.BuildQuotedQueryValue_WrapsAndTrimsValue);
             Run(nameof(GallagherApiClientTests.Constructor_ThrowsArgumentException_WhenBaseUrlIsNotHttpOrHttps), GallagherApiClientTests.Constructor_ThrowsArgumentException_WhenBaseUrlIsNotHttpOrHttps);
+            Run(nameof(GallagherApiClientTests.GetCardholderById_ThrowsArgumentNullException_WhenIdMissing), GallagherApiClientTests.GetCardholderById_ThrowsArgumentNullException_WhenIdMissing);
+            Run(nameof(GallagherApiClientTests.GetAccessGroupById_ThrowsArgumentNullException_WhenIdMissing), GallagherApiClientTests.GetAccessGroupById_ThrowsArgumentNullException_WhenIdMissing);
+            Run(nameof(GallagherApiClientTests.GetPersonalDataFieldById_ThrowsArgumentNullException_WhenIdMissing), GallagherApiClientTests.GetPersonalDataFieldById_ThrowsArgumentNullException_WhenIdMissing);
+            Run(nameof(GallagherApiClientTests.GetCardholderAccessGroups_ThrowsArgumentNullException_WhenIdMissing), GallagherApiClientTests.GetCardholderAccessGroups_ThrowsArgumentNullException_WhenIdMissing);
             Run(nameof(GallagherApiClientTests.BuildAddAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildAddAccessGroupPatchBody_MatchesGallagherShape);
             Run(nameof(GallagherApiClientTests.BuildRemoveAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildRemoveAccessGroupPatchBody_MatchesGallagherShape);
             Run(nameof(GallagherApiClientTests.BuildUpdateAccessGroupPatchBody_MatchesGallagherShape), GallagherApiClientTests.BuildUpdateAccessGroupPatchBody_MatchesGallagherShape);

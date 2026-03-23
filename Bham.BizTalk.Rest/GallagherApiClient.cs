@@ -38,6 +38,17 @@ namespace Bham.BizTalk.Rest
                 });
         }
 
+        public string GetPersonalDataFields()
+        {
+            return _client.GetJson(CombineUrl("personal_data_fields"));
+        }
+
+        public string GetPersonalDataFieldById(string fieldId)
+        {
+            if (string.IsNullOrWhiteSpace(fieldId)) throw new ArgumentNullException(nameof(fieldId));
+            return _client.GetJson(CombineUrl("personal_data_fields/" + EncodePathSegment(fieldId)));
+        }
+
         public string GetCardholdersByPdfValue(string pdfValue, string pdfFieldKey = "pdf_629")
         {
             if (string.IsNullOrWhiteSpace(pdfFieldKey)) throw new ArgumentNullException(nameof(pdfFieldKey));
@@ -50,9 +61,26 @@ namespace Bham.BizTalk.Rest
                 });
         }
 
+        public string GetCardholders()
+        {
+            return _client.GetJson(CombineUrl("cardholders"));
+        }
+
+        public string GetCardholderById(string cardholderId)
+        {
+            if (string.IsNullOrWhiteSpace(cardholderId)) throw new ArgumentNullException(nameof(cardholderId));
+            return _client.GetJson(CombineUrl("cardholders/" + EncodePathSegment(cardholderId)));
+        }
+
         public string GetAccessGroups()
         {
             return _client.GetJson(CombineUrl("access_groups"));
+        }
+
+        public string GetAccessGroupById(string accessGroupId)
+        {
+            if (string.IsNullOrWhiteSpace(accessGroupId)) throw new ArgumentNullException(nameof(accessGroupId));
+            return _client.GetJson(CombineUrl("access_groups/" + EncodePathSegment(accessGroupId)));
         }
 
         public string FindAccessGroupsByName(string accessGroupName)
@@ -67,7 +95,14 @@ namespace Bham.BizTalk.Rest
 
         public string GetAccessGroupCardholders(string accessGroupId)
         {
+            if (string.IsNullOrWhiteSpace(accessGroupId)) throw new ArgumentNullException(nameof(accessGroupId));
             return _client.GetJson(CombineUrl("access_groups/" + EncodePathSegment(accessGroupId) + "/cardholders"));
+        }
+
+        public string GetCardholderAccessGroups(string cardholderId)
+        {
+            if (string.IsNullOrWhiteSpace(cardholderId)) throw new ArgumentNullException(nameof(cardholderId));
+            return _client.GetJson(CombineUrl("cardholders/" + EncodePathSegment(cardholderId) + "/access_groups"));
         }
 
         public string ResolvePersonalDataFieldId(string fieldName)

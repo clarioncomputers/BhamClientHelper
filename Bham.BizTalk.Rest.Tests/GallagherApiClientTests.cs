@@ -26,6 +26,42 @@ namespace Bham.BizTalk.Rest.Tests
             AssertContains(ex.Message, "URL must be an absolute http or https URI");
         }
 
+        public static void GetCardholderById_ThrowsArgumentNullException_WhenIdMissing()
+        {
+            var client = CreateClient();
+
+            var ex = ExpectThrows<ArgumentNullException>(() => client.GetCardholderById("  "));
+
+            AssertContains(ex.ParamName, "cardholderId");
+        }
+
+        public static void GetAccessGroupById_ThrowsArgumentNullException_WhenIdMissing()
+        {
+            var client = CreateClient();
+
+            var ex = ExpectThrows<ArgumentNullException>(() => client.GetAccessGroupById(string.Empty));
+
+            AssertContains(ex.ParamName, "accessGroupId");
+        }
+
+        public static void GetPersonalDataFieldById_ThrowsArgumentNullException_WhenIdMissing()
+        {
+            var client = CreateClient();
+
+            var ex = ExpectThrows<ArgumentNullException>(() => client.GetPersonalDataFieldById(null));
+
+            AssertContains(ex.ParamName, "fieldId");
+        }
+
+        public static void GetCardholderAccessGroups_ThrowsArgumentNullException_WhenIdMissing()
+        {
+            var client = CreateClient();
+
+            var ex = ExpectThrows<ArgumentNullException>(() => client.GetCardholderAccessGroups("\t"));
+
+            AssertContains(ex.ParamName, "cardholderId");
+        }
+
         public static void BuildAddAccessGroupPatchBody_MatchesGallagherShape()
         {
             var result = GallagherApiClient.BuildAddAccessGroupPatchBody(
@@ -67,6 +103,18 @@ namespace Bham.BizTalk.Rest.Tests
                 throw new InvalidOperationException(
                     string.Format("Assertion failed. Expected: '{0}' Actual: '{1}'", expected, actual));
             }
+        }
+
+        private static GallagherApiClient CreateClient()
+        {
+            return new GallagherApiClient(
+                "https://example/api",
+                new BizTalkRestClientSettings
+                {
+                    ApiKeyHeaderName = "Authorization",
+                    ApiKeyHeaderValue = "test",
+                    TimeoutSeconds = 5
+                });
         }
 
         private static void AssertContains(string actual, string expectedFragment)
