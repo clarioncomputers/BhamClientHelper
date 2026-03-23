@@ -44,6 +44,7 @@
     <Compile Include="GallagherApiClientTests.cs" />
     <Compile Include="GallagherApiFacadeTests.cs" />
     <Compile Include="GallagherApiResponseParserTests.cs" />
+    <Compile Include="SmokeTestWorkflowOptionTests.cs" />
     <Compile Include="TestRunner.cs" />
   </ItemGroup>
   <ItemGroup>

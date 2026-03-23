@@ -49,7 +49,7 @@ namespace Bham.BizTalk.Rest
             return _client.GetJson(CombineUrl("personal_data_fields/" + EncodePathSegment(fieldId)));
         }
 
-        public string GetCardholdersByPdfValue(string pdfValue, string pdfFieldKey = "pdf_629")
+        public string GetCardholdersByPdfValue(string cardholderId, string pdfFieldKey = "pdf_629")
         {
             if (string.IsNullOrWhiteSpace(pdfFieldKey)) throw new ArgumentNullException(nameof(pdfFieldKey));
 
@@ -57,7 +57,7 @@ namespace Bham.BizTalk.Rest
                 CombineUrl("cardholders"),
                 new Dictionary<string, string>
                 {
-                    { pdfFieldKey, BuildQuotedQueryValue(pdfValue) }
+                    { pdfFieldKey, BuildQuotedQueryValue(cardholderId) }
                 });
         }
 
@@ -110,14 +110,29 @@ namespace Bham.BizTalk.Rest
             return GallagherApiResponseParser.GetEntityIdByName(GetPersonalDataFieldsByName(fieldName), fieldName);
         }
 
-        public string ResolveCardholderIdByPdfValue(string pdfValue, string pdfFieldKey = "pdf_629")
+        public string ResolvePdfFieldId(string fieldName)
         {
-            return GallagherApiResponseParser.GetFirstEntityId(GetCardholdersByPdfValue(pdfValue, pdfFieldKey));
+            return ResolvePersonalDataFieldId(fieldName);
+        }
+
+        public string ResolveCardholderIdByPdfValue(string cardholderId, string pdfFieldKey = "pdf_629")
+        {
+            return GallagherApiResponseParser.GetFirstEntityId(GetCardholdersByPdfValue(cardholderId, pdfFieldKey));
+        }
+
+        public string ResolveGallagherCardholderId(string cardholderId, string pdfFieldKey = "pdf_629")
+        {
+            return ResolveCardholderIdByPdfValue(cardholderId, pdfFieldKey);
         }
 
         public string ResolveAccessGroupIdByName(string accessGroupName)
         {
             return GallagherApiResponseParser.GetEntityIdByName(FindAccessGroupsByName(accessGroupName), accessGroupName);
+        }
+
+        public string SearchAccessGroupsByName(string accessGroupName)
+        {
+            return FindAccessGroupsByName(accessGroupName);
         }
 
         public string ResolveAccessGroupMembershipHref(string accessGroupId, string cardholderId)
@@ -139,11 +154,21 @@ namespace Bham.BizTalk.Rest
             return _client.PatchJson(url, body);
         }
 
+        public string RemoveCardholderFromAccessGroup(string cardholderId, string membershipHref)
+        {
+            return RemoveAccessGroupFromCardholder(cardholderId, membershipHref);
+        }
+
         public string UpdateAccessGroupForCardholder(string cardholderId, string membershipHref, string fromUtc, string untilUtc)
         {
             var url = CombineUrl("cardholders/" + EncodePathSegment(cardholderId));
             var body = BuildUpdateAccessGroupPatchBody(membershipHref, fromUtc, untilUtc);
             return _client.PatchJson(url, body);
+        }
+
+        public string UpdateCardholderAccessGroup(string cardholderId, string membershipHref, string fromUtc, string untilUtc)
+        {
+            return UpdateAccessGroupForCardholder(cardholderId, membershipHref, fromUtc, untilUtc);
         }
 
         public static string BuildQuotedQueryValue(string value)

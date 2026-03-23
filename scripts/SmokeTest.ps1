@@ -33,11 +33,15 @@ param(
     [ValidateSet('add', 'remove', 'update')]
     [string]$Operation,
 
+    [string]$CardholderId,
+
+    [string]$GallagherCardholderId,
+
+    [string]$PdfFieldId,
+
     [string]$PdfValue,
 
     [string]$PdfFieldKey = 'pdf_629',
-
-    [string]$CardholderId,
 
     [string]$AccessGroupName,
 
@@ -336,6 +340,21 @@ if ($Mode -eq 'gallagherworkflow') {
         $arguments.Add($Operation)
     }
 
+    if (-not [string]::IsNullOrWhiteSpace($CardholderId)) {
+        $arguments.Add('--cardholderId')
+        $arguments.Add($CardholderId)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($GallagherCardholderId)) {
+        $arguments.Add('--gallagherCardholderId')
+        $arguments.Add($GallagherCardholderId)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($PdfFieldId)) {
+        $arguments.Add('--pdfFieldId')
+        $arguments.Add($PdfFieldId)
+    }
+
     if (-not [string]::IsNullOrWhiteSpace($PdfValue)) {
         $arguments.Add('--pdfValue')
         $arguments.Add($PdfValue)
@@ -344,11 +363,6 @@ if ($Mode -eq 'gallagherworkflow') {
     if (-not [string]::IsNullOrWhiteSpace($PdfFieldKey)) {
         $arguments.Add('--pdfFieldKey')
         $arguments.Add($PdfFieldKey)
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($CardholderId)) {
-        $arguments.Add('--cardholderId')
-        $arguments.Add($CardholderId)
     }
 
     if (-not [string]::IsNullOrWhiteSpace($AccessGroupName)) {

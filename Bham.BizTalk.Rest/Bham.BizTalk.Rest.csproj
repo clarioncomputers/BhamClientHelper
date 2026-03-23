@@ -53,6 +53,7 @@
     <Compile Include="GallagherApiClient.cs" />
     <Compile Include="GallagherApiFacade.cs" />
     <Compile Include="GallagherApiResponseParser.cs" />
+    <Compile Include="GallagherWorkflowOptions.cs" />
     <Compile Include="PatchClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

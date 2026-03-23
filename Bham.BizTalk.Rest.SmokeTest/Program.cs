@@ -276,10 +276,10 @@ internal static class Program
 
 	private static int RunGallagherGetCardholderId(string[] args)
 	{
-		// gallaghergetcardholderid <baseUrl> <apiKey> <pdfValue> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		// gallaghergetcardholderid <baseUrl> <apiKey> <externalCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
 		if (args.Length < 4)
 		{
-			Console.Error.WriteLine("Gallagher cardholder lookup requires <baseUrl> <apiKey> <pdfValue>.");
+			Console.Error.WriteLine("Gallagher cardholder lookup requires <baseUrl> <apiKey> <externalCardholderId>.");
 			PrintUsage();
 			return 1;
 		}
@@ -413,7 +413,7 @@ internal static class Program
 		switch (options.Operation)
 		{
 			case "add":
-				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(cardholderId, "gallagherCardholderId or cardholderId");
 				EnsureValue(accessGroupId, "accessGroupId or accessGroupName");
 				EnsureValue(options.From, "from");
 				EnsureValue(options.Until, "until");
@@ -421,13 +421,13 @@ internal static class Program
 				Console.WriteLine("Gallagher workflow add succeeded.");
 				break;
 			case "remove":
-				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(cardholderId, "gallagherCardholderId or cardholderId");
 				EnsureValue(membershipHref, "membershipHref or accessGroupId/accessGroupName for membership lookup");
 				result = client.RemoveAccessGroupFromCardholder(cardholderId, membershipHref);
 				Console.WriteLine("Gallagher workflow remove succeeded.");
 				break;
 			case "update":
-				EnsureValue(cardholderId, "cardholderId or pdfValue");
+				EnsureValue(cardholderId, "gallagherCardholderId or cardholderId");
 				EnsureValue(membershipHref, "membershipHref or accessGroupId/accessGroupName for membership lookup");
 				EnsureValue(options.From, "from");
 				EnsureValue(options.Until, "until");
@@ -742,119 +742,34 @@ internal static class Program
 
 	private static GallagherWorkflowOptions LoadGallagherWorkflowOptionsFromFile(string configPath)
 	{
-		if (string.IsNullOrWhiteSpace(configPath))
-		{
-			throw new ArgumentNullException(nameof(configPath));
-		}
-
-		var fullPath = Path.GetFullPath(configPath);
-		var json = File.ReadAllText(fullPath);
-		var dictionary = GallagherApiResponseParser.DeserializeJsonObject(json);
-		var options = new GallagherWorkflowOptions();
-		ApplyDictionary(options, dictionary);
-		return options;
+		return GallagherWorkflowOptionsParser.LoadFromJsonFile(configPath);
 	}
 
 	private static void ApplyNamedArguments(GallagherWorkflowOptions options, IDictionary<string, string> namedArguments)
 	{
-		if (options == null) throw new ArgumentNullException(nameof(options));
-		if (namedArguments == null) return;
-
-		ApplyValue(options, "baseUrl", GetNamedArgument(namedArguments, "baseUrl"));
-		ApplyValue(options, "apiKey", GetNamedArgument(namedArguments, "apiKey"));
-		ApplyValue(options, "operation", GetNamedArgument(namedArguments, "operation"));
-		ApplyValue(options, "pdfValue", GetNamedArgument(namedArguments, "pdfValue"));
-		ApplyValue(options, "pdfFieldKey", GetNamedArgument(namedArguments, "pdfFieldKey"));
-		ApplyValue(options, "cardholderId", GetNamedArgument(namedArguments, "cardholderId"));
-		ApplyValue(options, "accessGroupName", GetNamedArgument(namedArguments, "accessGroupName"));
-		ApplyValue(options, "accessGroupId", GetNamedArgument(namedArguments, "accessGroupId"));
-		ApplyValue(options, "membershipHref", GetNamedArgument(namedArguments, "membershipHref"));
-		ApplyValue(options, "from", GetNamedArgument(namedArguments, "from"));
-		ApplyValue(options, "until", GetNamedArgument(namedArguments, "until"));
-		ApplyValue(options, "thumbprint", GetNamedArgument(namedArguments, "thumbprint"));
-		ApplyValue(options, "storeLocation", GetNamedArgument(namedArguments, "storeLocation"));
-		ApplyValue(options, "storeName", GetNamedArgument(namedArguments, "storeName"));
-		ApplyValue(options, "timeoutSeconds", GetNamedArgument(namedArguments, "timeoutSeconds"));
+		GallagherWorkflowOptionsParser.ApplyNamedArguments(options, namedArguments);
 	}
 
 	private static void ApplyDictionary(GallagherWorkflowOptions options, IDictionary<string, object> values)
 	{
-		if (options == null) throw new ArgumentNullException(nameof(options));
-		if (values == null) return;
-
-		foreach (var pair in values)
-		{
-			ApplyValue(options, pair.Key, pair.Value == null ? null : Convert.ToString(pair.Value));
-		}
+		GallagherWorkflowOptionsParser.ApplyDictionary(options, values);
 	}
 
 	private static void ApplyValue(GallagherWorkflowOptions options, string key, string value)
 	{
-		if (options == null || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
-		{
-			return;
-		}
-
-		switch (key.Trim().ToLowerInvariant())
-		{
-			case "baseurl":
-				options.BaseUrl = value;
-				break;
-			case "apikey":
-				options.ApiKey = value;
-				break;
-			case "operation":
-				options.Operation = value;
-				break;
-			case "pdfvalue":
-				options.PdfValue = value;
-				break;
-			case "pdffieldkey":
-				options.PdfFieldKey = value;
-				break;
-			case "cardholderid":
-				options.CardholderId = value;
-				break;
-			case "accessgroupname":
-				options.AccessGroupName = value;
-				break;
-			case "accessgroupid":
-				options.AccessGroupId = value;
-				break;
-			case "membershiphref":
-				options.MembershipHref = value;
-				break;
-			case "from":
-				options.From = value;
-				break;
-			case "until":
-				options.Until = value;
-				break;
-			case "thumbprint":
-				options.Thumbprint = value;
-				break;
-			case "storelocation":
-				options.StoreLocation = ParseStoreLocation(new[] { string.Empty, value }, 1, options.StoreLocation);
-				break;
-			case "storename":
-				options.StoreName = ParseStoreName(new[] { string.Empty, value }, 1, options.StoreName);
-				break;
-			case "timeoutseconds":
-				options.TimeoutSeconds = ParseInt(new[] { string.Empty, value }, 1, options.TimeoutSeconds);
-				break;
-		}
+		GallagherWorkflowOptionsParser.ApplyValue(options, key, value);
 	}
 
 	private static string ResolveCardholderId(GallagherWorkflowOptions options, GallagherApiClient client)
 	{
-		if (!string.IsNullOrWhiteSpace(options.CardholderId))
+		if (!string.IsNullOrWhiteSpace(options.GallagherCardholderId))
 		{
-			return options.CardholderId;
+			return options.GallagherCardholderId;
 		}
 
-		if (!string.IsNullOrWhiteSpace(options.PdfValue))
+		if (!string.IsNullOrWhiteSpace(options.CardholderId))
 		{
-			return client.ResolveCardholderIdByPdfValue(options.PdfValue, options.PdfFieldKey);
+			return client.ResolveGallagherCardholderId(options.CardholderId, options.PdfFieldKey);
 		}
 
 		return null;
@@ -892,22 +807,7 @@ internal static class Program
 
 	private static void ValidateGallagherWorkflowOptions(GallagherWorkflowOptions options)
 	{
-		if (options == null) throw new ArgumentNullException(nameof(options));
-		EnsureValue(options.BaseUrl, "baseUrl");
-		EnsureValue(options.ApiKey, "apiKey");
-		EnsureValue(options.Operation, "operation");
-
-		var operation = options.Operation.Trim().ToLowerInvariant();
-		if (operation != "add" && operation != "remove" && operation != "update")
-		{
-			throw new ArgumentException("Gallagher workflow operation must be add, remove, or update.");
-		}
-
-		options.Operation = operation;
-		if (string.IsNullOrWhiteSpace(options.PdfFieldKey))
-		{
-			options.PdfFieldKey = "pdf_629";
-		}
+		GallagherWorkflowOptionsParser.Validate(options);
 	}
 
 	private static string GetNamedArgument(IDictionary<string, string> namedArguments, string key)
@@ -1032,7 +932,7 @@ internal static class Program
 		Console.WriteLine("  patchpublicjson <url> <jsonBody> [timeoutSeconds]");
 		Console.WriteLine("  patchpublicxml <url> <xmlBody> [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetpdfid <baseUrl> <apiKey> <fieldName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
-		Console.WriteLine("  gallaghergetcardholderid <baseUrl> <apiKey> <pdfValue> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetcardholderid <baseUrl> <apiKey> <externalCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetaccessgroups <baseUrl> <apiKey> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghersearchaccessgroup <baseUrl> <apiKey> <groupName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetaccessgroupcardholders <baseUrl> <apiKey> <accessGroupId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
@@ -1040,7 +940,7 @@ internal static class Program
 		Console.WriteLine("  gallagherremoveaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallagherupdateaccessgroup <baseUrl> <apiKey> <cardholderId> <membershipHref> <fromUtc> <untilUtc> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallagherworkflow <configPath>");
-		Console.WriteLine("  gallagherworkflow --baseUrl <url> --apiKey <key> --operation <add|remove|update> [--pdfValue <value>] [--pdfFieldKey <field>] [--cardholderId <id>] [--accessGroupName <name>] [--accessGroupId <id>] [--membershipHref <href>] [--from <date>] [--until <date>] [--thumbprint <thumbprint>] [--storeLocation <location>] [--storeName <name>] [--timeoutSeconds <seconds>]");
+		Console.WriteLine("  gallagherworkflow --baseUrl <url> --apiKey <key> --operation <add|remove|update> [--cardholderId <value>] [--gallagherCardholderId <id>] [--pdfFieldId <id>] [--pdfFieldKey <field>] [--accessGroupName <name>] [--accessGroupId <id>] [--membershipHref <href>] [--from <date>] [--until <date>] [--thumbprint <thumbprint>] [--storeLocation <location>] [--storeName <name>] [--timeoutSeconds <seconds>]");
 		Console.WriteLine("  scenariomissingcert [url] [apiHeaderName] [apiHeaderValue] [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  scenariotimeoutpublic [delayMilliseconds] [timeoutSeconds]");
 		Console.WriteLine("  scenariotimeoutpublicxml [delayMilliseconds] [timeoutSeconds]");
@@ -1064,7 +964,7 @@ internal static class Program
 		Console.WriteLine("  gallagheraddaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 663 2026-04-01 2026-05-01");
 		Console.WriteLine("  gallagherremoveaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 https://its-d-cdx-01.adf.bham.ac.uk:8904/api/cardholders/653/access_groups/d64caab7bc5e42e8a193bd0e8b166b0b");
 		Console.WriteLine("  gallagherupdateaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 https://its-d-cdx-01.adf.bham.ac.uk:8904/api/cardholders/653/access_groups/2db46206474148c2878cca647ce74668 2026-04-01T00:00:00Z 2026-04-30T12:00:00Z");
-		Console.WriteLine("  gallagherworkflow --baseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api --apiKey 2133-6820-E746-11CC-52D2-3417-CF15-2482 --operation add --pdfValue IDCARD.12345 --accessGroupName 6040-CHAMBERLAIN-B-11703 --from 2026-04-01 --until 2026-05-01");
+		Console.WriteLine("  gallagherworkflow --baseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api --apiKey 2133-6820-E746-11CC-52D2-3417-CF15-2482 --operation add --cardholderId IDCARD.12345 --pdfFieldId 629 --accessGroupName 6040-CHAMBERLAIN-B-11703 --from 2026-04-01 --until 2026-05-01");
 		Console.WriteLine("  gallagherworkflow .\\samples\\gallagher-workflow.sample.json");
 		Console.WriteLine("  scenariomissingcert");
 		Console.WriteLine("  scenariotimeoutpublic 5000 1");
@@ -1175,22 +1075,4 @@ internal static class Program
 		}
 	}
 
-	private sealed class GallagherWorkflowOptions
-	{
-		public string BaseUrl { get; set; }
-		public string ApiKey { get; set; }
-		public string Operation { get; set; }
-		public string PdfValue { get; set; }
-		public string PdfFieldKey { get; set; }
-		public string CardholderId { get; set; }
-		public string AccessGroupName { get; set; }
-		public string AccessGroupId { get; set; }
-		public string MembershipHref { get; set; }
-		public string From { get; set; }
-		public string Until { get; set; }
-		public string Thumbprint { get; set; }
-		public StoreLocation StoreLocation { get; set; } = StoreLocation.LocalMachine;
-		public StoreName StoreName { get; set; } = StoreName.My;
-		public int TimeoutSeconds { get; set; } = 100;
-	}
 }

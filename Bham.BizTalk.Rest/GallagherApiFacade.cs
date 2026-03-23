@@ -71,7 +71,7 @@ namespace Bham.BizTalk.Rest
             string baseUrl,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string pdfValue,
+            string cardholderId,
             string pdfFieldKey = "pdf_629",
             string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
@@ -80,7 +80,7 @@ namespace Bham.BizTalk.Rest
             Action<BizTalkRestLogEntry> logger = null)
         {
             return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
-                .GetCardholdersByPdfValue(pdfValue, pdfFieldKey);
+                .GetCardholdersByPdfValue(cardholderId, pdfFieldKey);
         }
 
         public static string GetCardholderById(
@@ -187,11 +187,26 @@ namespace Bham.BizTalk.Rest
                 .ResolvePersonalDataFieldId(fieldName);
         }
 
+        public static string ResolvePdfFieldId(
+            string baseUrl,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string fieldName,
+            string certThumbprint = null,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
+                .ResolvePdfFieldId(fieldName);
+        }
+
         public static string ResolveCardholderIdByPdfValue(
             string baseUrl,
             string apiKeyHeaderName,
             string apiKeyHeaderValue,
-            string pdfValue,
+            string cardholderId,
             string pdfFieldKey = "pdf_629",
             string certThumbprint = null,
             StoreLocation storeLocation = StoreLocation.LocalMachine,
@@ -200,7 +215,23 @@ namespace Bham.BizTalk.Rest
             Action<BizTalkRestLogEntry> logger = null)
         {
             return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
-                .ResolveCardholderIdByPdfValue(pdfValue, pdfFieldKey);
+                .ResolveCardholderIdByPdfValue(cardholderId, pdfFieldKey);
+        }
+
+        public static string ResolveGallagherCardholderId(
+            string baseUrl,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string cardholderId,
+            string pdfFieldKey = "pdf_629",
+            string certThumbprint = null,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
+                .ResolveGallagherCardholderId(cardholderId, pdfFieldKey);
         }
 
         public static string ResolveAccessGroupIdByName(
@@ -216,6 +247,21 @@ namespace Bham.BizTalk.Rest
         {
             return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
                 .ResolveAccessGroupIdByName(accessGroupName);
+        }
+
+        public static string SearchAccessGroupsByName(
+            string baseUrl,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string accessGroupName,
+            string certThumbprint = null,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
+                .SearchAccessGroupsByName(accessGroupName);
         }
 
         public static string ResolveAccessGroupMembershipHref(
@@ -268,6 +314,22 @@ namespace Bham.BizTalk.Rest
                 .RemoveAccessGroupFromCardholder(cardholderId, membershipHref);
         }
 
+        public static string RemoveCardholderFromAccessGroup(
+            string baseUrl,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string cardholderId,
+            string membershipHref,
+            string certThumbprint = null,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
+                .RemoveCardholderFromAccessGroup(cardholderId, membershipHref);
+        }
+
         public static string UpdateAccessGroupForCardholder(
             string baseUrl,
             string apiKeyHeaderName,
@@ -284,6 +346,24 @@ namespace Bham.BizTalk.Rest
         {
             return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
                 .UpdateAccessGroupForCardholder(cardholderId, membershipHref, fromUtc, untilUtc);
+        }
+
+        public static string UpdateCardholderAccessGroup(
+            string baseUrl,
+            string apiKeyHeaderName,
+            string apiKeyHeaderValue,
+            string cardholderId,
+            string membershipHref,
+            string fromUtc,
+            string untilUtc,
+            string certThumbprint = null,
+            StoreLocation storeLocation = StoreLocation.LocalMachine,
+            StoreName storeName = StoreName.My,
+            int timeoutSeconds = 100,
+            Action<BizTalkRestLogEntry> logger = null)
+        {
+            return CreateClient(baseUrl, apiKeyHeaderName, apiKeyHeaderValue, certThumbprint, storeLocation, storeName, timeoutSeconds, logger)
+                .UpdateCardholderAccessGroup(cardholderId, membershipHref, fromUtc, untilUtc);
         }
 
         private static GallagherApiClient CreateClient(
