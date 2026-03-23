@@ -251,6 +251,82 @@ strPatchXmlResponse =
 		timeoutSeconds: 100);
 ```
 
+### BizTalk .odx example (set base URL once)
+Use one orchestration variable for the Gallagher base URL, assign it once, then reuse it across Expression shapes.
+
+Expression shape A (initialize variables):
+```csharp
+// In production, load from SSO/BRE/config instead of hardcoding.
+strGallagherBaseUrl = "https://its-d-cdx-01.adf.bham.ac.uk:8904/api";
+strApiKey = "YOUR_API_KEY";
+strPdfValue = "IDCARD.12345";
+```
+
+Expression shape B (direct helper call):
+```csharp
+strResponse =
+	Bham.BizTalk.Rest.PatchClient.GetJsonWithApiKey(
+		strGallagherBaseUrl + "/cardholders?pdf_629=%22" + strPdfValue + "%22",
+		"Authorization",
+		strApiKey,
+		100);
+```
+
+Expression shape C (typed wrapper call):
+```csharp
+Bham.BizTalk.Rest.BizTalkRestClientSettings settings = null;
+Bham.BizTalk.Rest.GallagherApiClient gallagher = null;
+
+settings = new Bham.BizTalk.Rest.BizTalkRestClientSettings();
+settings.ApiKeyHeaderName = "Authorization";
+settings.ApiKeyHeaderValue = strApiKey;
+settings.TimeoutSeconds = 100;
+
+gallagher = new Bham.BizTalk.Rest.GallagherApiClient(strGallagherBaseUrl, settings);
+strResponse = gallagher.GetCardholdersByPdfValue(strPdfValue, "pdf_629");
+```
+
+Expression shape D (typed GET wrapper examples):
+```csharp
+// Reuse the same `gallagher` instance from the previous Expression shape.
+
+// GET /api/personal_data_fields
+strResponse = gallagher.GetPersonalDataFields();
+
+// GET /api/personal_data_fields?name="ThirdPartyID"
+strResponse = gallagher.GetPersonalDataFieldsByName("ThirdPartyID");
+
+// GET /api/cardholders
+strResponse = gallagher.GetCardholders();
+
+// GET /api/cardholders?pdf_629="IDCARD.12345"
+strResponse = gallagher.GetCardholdersByPdfValue("IDCARD.12345", "pdf_629");
+
+// GET /api/access_groups
+strResponse = gallagher.GetAccessGroups();
+
+// GET /api/access_groups?name="6040-CHAMBERLAIN-B-11703"
+strResponse = gallagher.FindAccessGroupsByName("6040-CHAMBERLAIN-B-11703");
+
+// GET /api/access_groups/663/cardholders
+strResponse = gallagher.GetAccessGroupCardholders("663");
+```
+
+Expression shape E (typed GET by-id wrapper examples):
+```csharp
+// GET /api/personal_data_fields/629
+strResponse = gallagher.GetPersonalDataFieldById("629");
+
+// GET /api/cardholders/653
+strResponse = gallagher.GetCardholderById("653");
+
+// GET /api/access_groups/663
+strResponse = gallagher.GetAccessGroupById("663");
+
+// GET /api/cardholders/653/access_groups
+strResponse = gallagher.GetCardholderAccessGroups("653");
+```
+
 Typical orchestration variables:
 - `strGetResponse`
 - `strGetXmlResponse`
