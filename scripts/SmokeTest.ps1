@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('getpublicjson', 'patchpublicjson', 'gallagherworkflow', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
+    [ValidateSet('getpublicjson', 'patchpublicjson', 'gallagherworkflow', 'gallaghergetcardholderbyid', 'gallaghergetcardholderaccessgroups', 'gallagherresolvemembershiphref', 'scenariomissingcert', 'scenariotimeoutpublic', 'scenariotimeoutpublicxml', 'scenariononsuccesshttp', 'scenariononsuccesshttpxml', 'scenariononsuccesshttps', 'scenariononsuccesshttpsxml', 'runfailurescenarios', 'runfailurescenariosxml')]
     [string]$Mode,
 
     [string]$Url = 'https://httpstat.us/503',
@@ -409,5 +409,87 @@ if ($Mode -eq 'gallagherworkflow') {
     $arguments.Add([string]$TimeoutSeconds)
 
     $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments $arguments.ToArray()
+    exit $exitCode
+}
+
+if ($Mode -eq 'gallaghergetcardholderbyid') {
+    if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
+        throw 'BaseUrl is required for gallaghergetcardholderbyid.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+        throw 'ApiKey is required for gallaghergetcardholderbyid.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($GallagherCardholderId)) {
+        throw 'GallagherCardholderId is required for gallaghergetcardholderbyid.'
+    }
+
+    $arguments = @('gallaghergetcardholderbyid', $BaseUrl, $ApiKey, $GallagherCardholderId)
+
+    if (-not [string]::IsNullOrWhiteSpace($Thumbprint)) {
+        $arguments += $Thumbprint
+        $arguments += $StoreLocation
+        $arguments += $StoreName
+        $arguments += [string]$TimeoutSeconds
+    }
+
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments $arguments
+    exit $exitCode
+}
+
+if ($Mode -eq 'gallaghergetcardholderaccessgroups') {
+    if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
+        throw 'BaseUrl is required for gallaghergetcardholderaccessgroups.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+        throw 'ApiKey is required for gallaghergetcardholderaccessgroups.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($GallagherCardholderId)) {
+        throw 'GallagherCardholderId is required for gallaghergetcardholderaccessgroups.'
+    }
+
+    $arguments = @('gallaghergetcardholderaccessgroups', $BaseUrl, $ApiKey, $GallagherCardholderId)
+
+    if (-not [string]::IsNullOrWhiteSpace($Thumbprint)) {
+        $arguments += $Thumbprint
+        $arguments += $StoreLocation
+        $arguments += $StoreName
+        $arguments += [string]$TimeoutSeconds
+    }
+
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments $arguments
+    exit $exitCode
+}
+
+if ($Mode -eq 'gallagherresolvemembershiphref') {
+    if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
+        throw 'BaseUrl is required for gallagherresolvemembershiphref.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+        throw 'ApiKey is required for gallagherresolvemembershiphref.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($AccessGroupId)) {
+        throw 'AccessGroupId is required for gallagherresolvemembershiphref.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($GallagherCardholderId)) {
+        throw 'GallagherCardholderId is required for gallagherresolvemembershiphref.'
+    }
+
+    $arguments = @('gallagherresolvemembershiphref', $BaseUrl, $ApiKey, $AccessGroupId, $GallagherCardholderId)
+
+    if (-not [string]::IsNullOrWhiteSpace($Thumbprint)) {
+        $arguments += $Thumbprint
+        $arguments += $StoreLocation
+        $arguments += $StoreName
+        $arguments += [string]$TimeoutSeconds
+    }
+
+    $exitCode = Invoke-SmokeTestMode -ExecutablePath $executablePath -Arguments $arguments
     exit $exitCode
 }

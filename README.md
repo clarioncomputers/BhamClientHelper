@@ -528,6 +528,30 @@ Gallagher workflow sample using a known Gallagher numeric cardholder id directly
 
     .\scripts\SmokeTest.ps1 -Mode gallagherworkflow -ConfigPath .\samples\gallagher-workflow-direct-gallagher-cardholder-id.sample.json
 
+Direct Gallagher cardholder lookup by Gallagher numeric id:
+
+    .\scripts\SmokeTest.ps1 -Mode gallaghergetcardholderbyid -BaseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api -ApiKey YOUR_API_KEY -GallagherCardholderId 653
+
+Direct Gallagher cardholder access-groups lookup by Gallagher numeric id:
+
+    .\scripts\SmokeTest.ps1 -Mode gallaghergetcardholderaccessgroups -BaseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api -ApiKey YOUR_API_KEY -GallagherCardholderId 653
+
+Direct Gallagher membership href lookup by access group id and Gallagher cardholder id:
+
+    .\scripts\SmokeTest.ps1 -Mode gallagherresolvemembershiphref -BaseUrl https://its-d-cdx-01.adf.bham.ac.uk:8904/api -ApiKey YOUR_API_KEY -AccessGroupId 663 -GallagherCardholderId 653
+
+Direct console invocation for the same lookup:
+
+    dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- gallaghergetcardholderbyid https://its-d-cdx-01.adf.bham.ac.uk:8904/api YOUR_API_KEY 653
+
+Direct console invocation for cardholder access-groups:
+
+    dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- gallaghergetcardholderaccessgroups https://its-d-cdx-01.adf.bham.ac.uk:8904/api YOUR_API_KEY 653
+
+Direct console invocation for membership href resolution:
+
+    dotnet run --project .\Bham.BizTalk.Rest.SmokeTest\Bham.BizTalk.Rest.SmokeTest.csproj -- gallagherresolvemembershiphref https://its-d-cdx-01.adf.bham.ac.uk:8904/api YOUR_API_KEY 663 653
+
 Failure scenarios:
 
     .\scripts\SmokeTest.ps1 -Mode scenariomissingcert
@@ -565,3 +589,419 @@ Verify strong name:
 - samples/gallagher-workflow.sample.json
 - samples/gallagher-workflow-direct-gallagher-cardholder-id.sample.json
 - Gallagher API.postman_collection.json
+
+## 14. Class overview
+
+This section gives a high-level explanation of each public class in the library and what role it plays.
+
+### BizTalkRestClientSettings
+
+Purpose:
+- Holds the connection settings used by `BizTalkRestClient` and the Gallagher wrapper classes.
+
+What it contains:
+- `ApiKeyHeaderName`: HTTP header name used for API key or token authentication.
+- `ApiKeyHeaderValue`: HTTP header value sent with each request.
+- `CertThumbprint`: optional client certificate thumbprint.
+- `StoreLocation`: Windows certificate store location to search.
+- `StoreName`: Windows certificate store name to search.
+- `TimeoutSeconds`: request timeout.
+- `Logger`: optional callback for request and error diagnostics.
+
+### BizTalkRestClient
+
+Purpose:
+- Low-level reusable REST client for GET and PATCH calls.
+
+When to use it:
+- Use this in regular .NET code when you want direct control over URLs and payloads.
+- In BizTalk orchestration code, prefer `GallagherApiFacade` or `PatchClient`.
+
+### BizTalkRestLogLevel
+
+Purpose:
+- Enum that labels diagnostic messages by severity.
+
+### BizTalkRestLogEntry
+
+Purpose:
+- Represents one diagnostic event written through the optional logger callback.
+
+What it contains:
+- Timestamp, severity, operation name, URL, message, HTTP status code, and any related exception.
+
+### BizTalkRestClientException
+
+Purpose:
+- Exception type thrown when a REST call fails.
+
+Why it matters:
+- It carries the HTTP operation, URL, status code, and response body so failures are easier to troubleshoot from BizTalk or smoke tests.
+
+### PatchClient
+
+Purpose:
+- Static convenience wrapper for raw GET and PATCH calls.
+
+When to use it:
+- Use this when you do not need Gallagher-specific logic and just want a direct static helper.
+
+### GallagherApiClient
+
+Purpose:
+- Gallagher-specific wrapper over `BizTalkRestClient`.
+
+What it does:
+- Knows Gallagher endpoint paths.
+- Builds Gallagher query strings.
+- Creates PATCH request bodies for access-group membership operations.
+
+When to use it:
+- Use it in regular .NET code, or inside BizTalk Atomic scopes.
+
+### GallagherApiFacade
+
+Purpose:
+- Static BizTalk-safe entry point for Gallagher operations.
+
+Why it exists:
+- BizTalk orchestration code should avoid holding non-serializable client instances in orchestration state.
+- This facade lets you call Gallagher operations using only primitive arguments.
+- The facade now includes explicit no-logger overloads for BizTalk Expression shape compatibility.
+
+### GallagherApiResponseParser
+
+Purpose:
+- Extracts common values from Gallagher JSON responses.
+
+Typical uses:
+- Get the first entity id from a list response.
+- Resolve an id by display name.
+- Find an access-group membership href for update or remove operations.
+
+### GallagherWorkflowOptions
+
+Purpose:
+- Configuration object used by the smoke-test and workflow helper path.
+
+What it contains:
+- All the inputs needed for common Gallagher flows, including base URL, API key, ids, dates, certificate settings, and timeout.
+
+### GallagherWorkflowOptionsParser
+
+Purpose:
+- Loads and validates `GallagherWorkflowOptions` from JSON files or dictionaries.
+
+When to use it:
+- Use this in automation, smoke tests, or helper tooling that reads workflow configuration from files or command-line arguments.
+
+## 15. Method reference
+
+This section gives a simple explanation for each public method. For methods that have both a BizTalk-friendly overload and a logger-enabled overload, the explanation is the same.
+
+### BizTalkRestClient methods
+
+- `BizTalkRestClient(settings)`
+    Creates a REST client using API key, certificate, timeout, and optional logger settings.
+
+- `GetJson(baseUrl, queryParameters)`
+    Sends an HTTP GET request and returns the response body as JSON text.
+
+- `GetXml(baseUrl, queryParameters)`
+    Sends an HTTP GET request and returns the response body as XML text.
+
+- `PatchJson(url, jsonBody)`
+    Sends an HTTP PATCH request with a JSON body and returns the response body.
+
+- `PatchXml(url, xmlBody)`
+    Sends an HTTP PATCH request with an XML body and returns the response body.
+
+- `BuildUrl(baseUrl, queryParameters)`
+    Builds a URL with query-string parameters appended and correctly escaped.
+
+### BizTalkRestLogging methods
+
+- `Write(logger, level, operation, url, message, statusCode, exception)`
+    Sends a diagnostic event to the configured logger callback if one is present.
+
+### PatchClient methods
+
+- `GetJsonWithClientCertAndApiKey(...)`
+    Performs a JSON GET request using an API key and an explicit certificate store location and store name.
+
+- `GetJsonWithClientCertAndApiKeyDefaultStore(...)`
+    Performs a JSON GET request using an API key and the default certificate store settings.
+
+- `GetJsonWithApiKey(...)`
+    Performs a JSON GET request using only an API key and no client certificate.
+
+- `GetXmlWithClientCertAndApiKey(...)`
+    Performs an XML GET request using an API key and an explicit certificate store location and store name.
+
+- `GetXmlWithClientCertAndApiKeyDefaultStore(...)`
+    Performs an XML GET request using an API key and the default certificate store settings.
+
+- `GetXmlWithApiKey(...)`
+    Performs an XML GET request using only an API key and no client certificate.
+
+- `PatchJsonWithClientCertAndApiKey(...)`
+    Performs a JSON PATCH request using an API key and an explicit certificate store location and store name.
+
+- `PatchJsonWithClientCertAndApiKeyDefaultStore(...)`
+    Performs a JSON PATCH request using an API key and the default certificate store settings.
+
+- `PatchJsonWithApiKey(...)`
+    Performs a JSON PATCH request using only an API key and no client certificate.
+
+- `PatchXmlWithClientCertAndApiKey(...)`
+    Performs an XML PATCH request using an API key and an explicit certificate store location and store name.
+
+- `PatchXmlWithClientCertAndApiKeyDefaultStore(...)`
+    Performs an XML PATCH request using an API key and the default certificate store settings.
+
+- `PatchXmlWithApiKey(...)`
+    Performs an XML PATCH request using only an API key and no client certificate.
+
+- `GetWithClientCertAndApiKey(...)`
+    Performs a raw GET request where you control the response content type and certificate settings.
+
+- `PatchWithClientCertAndApiKey(...)`
+    Performs a raw PATCH request where you control the request content type, response content type, and certificate settings.
+
+### GallagherApiClient methods
+
+- `GallagherApiClient(baseUrl, settings)`
+    Creates a Gallagher client from a base URL and a settings object.
+
+- `GallagherApiClient(baseUrl, client)`
+    Creates a Gallagher client from a base URL and an already-configured low-level REST client.
+
+- `GetPersonalDataFieldsByName(fieldName)`
+    Gets Gallagher personal data field records filtered by field name.
+
+- `GetPersonalDataFields()`
+    Gets all Gallagher personal data fields.
+
+- `GetPersonalDataFieldById(fieldId)`
+    Gets one Gallagher personal data field by its numeric id.
+
+- `GetCardholdersByPdfValue(cardholderId, pdfFieldKey)`
+    Searches Gallagher cardholders where a Personal Data Field key matches the supplied external cardholder id value.
+
+- `GetCardholders()`
+    Gets all cardholders from Gallagher.
+
+- `GetCardholderById(cardholderId)`
+    Gets a single Gallagher cardholder by Gallagher's own cardholder id.
+
+- `GetAccessGroups()`
+    Gets all access groups from Gallagher.
+
+- `GetAccessGroupById(accessGroupId)`
+    Gets a single access group by its Gallagher id.
+
+- `FindAccessGroupsByName(accessGroupName)`
+    Searches access groups by name.
+
+- `GetAccessGroupCardholders(accessGroupId)`
+    Gets the cardholders currently assigned to one access group.
+
+- `GetCardholderAccessGroups(cardholderId)`
+    Gets the access groups currently assigned to one cardholder.
+
+- `ResolvePersonalDataFieldId(fieldName)`
+    Finds a personal data field by name and returns its id.
+
+- `ResolvePdfFieldId(fieldName)`
+    Alias for resolving a personal data field id when the field is used as a PDF lookup field.
+
+- `ResolveCardholderIdByPdfValue(cardholderId, pdfFieldKey)`
+    Finds a Gallagher cardholder id by searching a Personal Data Field value.
+
+- `ResolveGallagherCardholderId(cardholderId, pdfFieldKey)`
+    Alias for resolving Gallagher's own cardholder id from an external id value.
+
+- `ResolveAccessGroupIdByName(accessGroupName)`
+    Finds an access group id by its name.
+
+- `SearchAccessGroupsByName(accessGroupName)`
+    Alias for searching access groups by name.
+
+- `ResolveAccessGroupMembershipHref(accessGroupId, cardholderId)`
+    Finds the membership href that links a specific cardholder to a specific access group.
+
+- `AddAccessGroupToCardholder(cardholderId, accessGroupId, fromDate, untilDate)`
+    Adds an access group membership to a cardholder for the supplied date range.
+
+- `RemoveAccessGroupFromCardholder(cardholderId, membershipHref)`
+    Removes an access group membership from a cardholder using the membership href.
+
+- `RemoveCardholderFromAccessGroup(cardholderId, membershipHref)`
+    Alias for removing an access group membership from a cardholder.
+
+- `UpdateAccessGroupForCardholder(cardholderId, membershipHref, fromUtc, untilUtc)`
+    Updates the dates on an existing access group membership.
+
+- `UpdateCardholderAccessGroup(cardholderId, membershipHref, fromUtc, untilUtc)`
+    Alias for updating an existing access group membership.
+
+- `BuildQuotedQueryValue(value)`
+    Wraps a query value in quotes so it matches Gallagher's expected filter format.
+
+- `BuildAddAccessGroupPatchBody(accessGroupHref, fromDate, untilDate)`
+    Builds the JSON PATCH body used to add an access group membership.
+
+- `BuildRemoveAccessGroupPatchBody(membershipHref)`
+    Builds the JSON PATCH body used to remove an access group membership.
+
+- `BuildUpdateAccessGroupPatchBody(membershipHref, fromUtc, untilUtc)`
+    Builds the JSON PATCH body used to update an access group membership.
+
+### GallagherApiFacade methods
+
+Note:
+- Many facade methods now have multiple overloads.
+- The short explanation below applies to all overloads of the same method name.
+- For BizTalk Expression shapes, use the overloads that do not include a logger parameter.
+
+- `GetPersonalDataFields(...)`
+    Gets all Gallagher personal data fields.
+
+- `GetPersonalDataFieldsByName(...)`
+    Gets Gallagher personal data fields filtered by field name.
+
+- `GetPersonalDataFieldById(...)`
+    Gets one personal data field by id.
+
+- `GetCardholders(...)`
+    Gets all Gallagher cardholders.
+
+- `GetCardholdersByPdfValue(...)`
+    Searches cardholders by a Personal Data Field value such as `pdf_629="IDCARD.12345"`.
+
+- `GetCardholderById(...)`
+    Gets one Gallagher cardholder by Gallagher's own id.
+
+- `GetAccessGroups(...)`
+    Gets all Gallagher access groups.
+
+- `GetAccessGroupById(...)`
+    Gets one access group by id.
+
+- `FindAccessGroupsByName(...)`
+    Searches access groups by name.
+
+- `GetAccessGroupCardholders(...)`
+    Gets the cardholders assigned to one access group.
+
+- `GetCardholderAccessGroups(...)`
+    Gets the access groups assigned to one cardholder.
+
+- `ResolvePersonalDataFieldId(...)`
+    Resolves a personal data field name to its id.
+
+- `ResolvePdfFieldId(...)`
+    Alias for resolving a personal data field id when used as a PDF field.
+
+- `ResolveCardholderIdByPdfValue(...)`
+    Resolves Gallagher's cardholder id by searching a Personal Data Field value.
+
+- `ResolveGallagherCardholderId(...)`
+    Alias for resolving Gallagher's cardholder id from an external id value.
+
+- `ResolveAccessGroupIdByName(...)`
+    Resolves an access group name to its id.
+
+- `SearchAccessGroupsByName(...)`
+    Alias for searching access groups by name.
+
+- `ResolveAccessGroupMembershipHref(...)`
+    Resolves the href for the membership record linking one cardholder to one access group.
+
+- `AddAccessGroupToCardholder(...)`
+    Adds an access group to a cardholder for a given date range.
+
+- `RemoveAccessGroupFromCardholder(...)`
+    Removes an access group assignment from a cardholder.
+
+- `RemoveCardholderFromAccessGroup(...)`
+    Alias for removing an access group assignment from a cardholder.
+
+- `UpdateAccessGroupForCardholder(...)`
+    Updates the dates on an existing access group assignment.
+
+- `UpdateCardholderAccessGroup(...)`
+    Alias for updating an existing access group assignment.
+
+### GallagherApiResponseParser methods
+
+- `DeserializeJsonObject(json)`
+    Parses JSON text into a dictionary/object structure that the helper methods can inspect.
+
+- `GetFirstEntityId(responseJson)`
+    Returns the id of the first entity in a Gallagher response.
+
+- `TryGetFirstEntityId(responseJson, out id)`
+    Tries to return the id of the first entity without throwing if no id is found.
+
+- `GetEntityIdByName(responseJson, name)`
+    Returns the id of the entity whose `name` matches the supplied value.
+
+- `TryGetEntityIdByName(responseJson, name, out id)`
+    Tries to return the id of the entity whose `name` matches the supplied value.
+
+- `GetAccessGroupMembershipHrefForCardholder(responseJson, cardholderId)`
+    Returns the membership href for the specified cardholder within an access-group membership response.
+
+- `TryGetAccessGroupMembershipHrefForCardholder(responseJson, cardholderId, out href)`
+    Tries to return the membership href for the specified cardholder without throwing if no match is found.
+
+- `GetAccessGroupMembershipHrefByNameAndDates(responseJson, cardholderName, fromDate, untilDate)`
+    Returns the membership href for a cardholder name, optionally matching the supplied date range as well.
+
+- `TryGetAccessGroupMembershipHrefByNameAndDates(responseJson, cardholderName, fromDate, untilDate, out href)`
+    Tries to return the membership href for a cardholder name and optional dates without throwing if no match is found.
+
+### GallagherWorkflowOptionsParser methods
+
+- `LoadFromJsonFile(configPath)`
+    Loads workflow options from a JSON configuration file.
+
+- `ApplyNamedArguments(options, namedArguments)`
+    Applies string-based named arguments onto an existing workflow options object.
+
+- `ApplyDictionary(options, values)`
+    Applies dictionary values onto an existing workflow options object.
+
+- `ApplyValue(options, key, value)`
+    Applies one key/value pair onto an existing workflow options object.
+
+- `Validate(options)`
+    Checks that the workflow options contain the required values for the requested operation.
+
+## 16. BizTalk expression cheat sheet
+
+Use these overloads in BizTalk Expression shapes. They avoid the trailing logger parameter and are the safest choice for orchestration binding.
+
+| Task | Method | Recommended BizTalk call shape |
+| --- | --- | --- |
+| Get a Gallagher cardholder by Gallagher id | `GetCardholderById` | `baseUrl, headerName, apiKey, gallagherCardholderId, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Find cardholders by Personal Data Field value | `GetCardholdersByPdfValue` | `baseUrl, headerName, apiKey, cardholderId, pdfFieldKey, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Resolve Gallagher cardholder id from external id | `ResolveGallagherCardholderId` | `baseUrl, headerName, apiKey, cardholderId, pdfFieldKey, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Resolve Personal Data Field id by name | `ResolvePersonalDataFieldId` | `baseUrl, headerName, apiKey, fieldName, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Resolve PDF field id by name | `ResolvePdfFieldId` | `baseUrl, headerName, apiKey, fieldName, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Get all access groups | `GetAccessGroups` | `baseUrl, headerName, apiKey, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Resolve access group id by name | `ResolveAccessGroupIdByName` | `baseUrl, headerName, apiKey, accessGroupName, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Search access groups by name | `SearchAccessGroupsByName` | `baseUrl, headerName, apiKey, accessGroupName, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Get one access group by id | `GetAccessGroupById` | `baseUrl, headerName, apiKey, accessGroupId, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Get access-group cardholders | `GetAccessGroupCardholders` | `baseUrl, headerName, apiKey, accessGroupId, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Get cardholder access groups | `GetCardholderAccessGroups` | `baseUrl, headerName, apiKey, gallagherCardholderId, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Resolve membership href | `ResolveAccessGroupMembershipHref` | `baseUrl, headerName, apiKey, accessGroupId, gallagherCardholderId, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Add access group to cardholder | `AddAccessGroupToCardholder` | `baseUrl, headerName, apiKey, gallagherCardholderId, accessGroupId, fromDate, untilDate, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Remove cardholder from access group | `RemoveCardholderFromAccessGroup` | `baseUrl, headerName, apiKey, gallagherCardholderId, membershipHref, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+| Update cardholder access group | `UpdateCardholderAccessGroup` | `baseUrl, headerName, apiKey, gallagherCardholderId, membershipHref, fromUtc, untilUtc, certThumbprint, storeLocation, storeName, timeoutSeconds` |
+
+Rules:
+- Do not pass `null` as a final logger argument in BizTalk expressions.
+- Prefer the explicit no-logger overloads listed above.
+- If you already have Gallagher's numeric cardholder id, use `GetCardholderById` directly.

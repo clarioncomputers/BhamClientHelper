@@ -2,6 +2,9 @@ using System;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Regression tests for facade-level argument validation and BizTalk-safe entry points.
+    /// </summary>
     internal static class GallagherApiFacadeTests
     {
         public static void GetCardholderById_ThrowsArgumentNullException_WhenIdMissing()

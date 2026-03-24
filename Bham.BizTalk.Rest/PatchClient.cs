@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Bham.BizTalk.Rest
 {
+    /// <summary>
+    /// Static helper for raw GET and PATCH calls with optional API key and client certificate support.
+    /// </summary>
     public static class PatchClient
     {
         // Cache HttpClient instances by certificate + store + timeout so sockets are reused safely.

@@ -59,6 +59,21 @@ internal static class Program
 				return RunGallagherGetCardholderId(args);
 			}
 
+			if (mode == "gallaghergetcardholderbyid")
+			{
+				return RunGallagherGetCardholderById(args);
+			}
+
+			if (mode == "gallaghergetcardholderaccessgroups")
+			{
+				return RunGallagherGetCardholderAccessGroups(args);
+			}
+
+			if (mode == "gallagherresolvemembershiphref")
+			{
+				return RunGallagherResolveMembershipHref(args);
+			}
+
 			if (mode == "gallaghergetaccessgroups")
 			{
 				return RunGallagherGetAccessGroups(args);
@@ -288,6 +303,60 @@ internal static class Program
 		var result = client.GetCardholdersByPdfValue(args[3]);
 
 		Console.WriteLine("Gallagher cardholder lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherGetCardholderById(string[] args)
+	{
+		// gallaghergetcardholderbyid <baseUrl> <apiKey> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher cardholder-by-id lookup requires <baseUrl> <apiKey> <gallagherCardholderId>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.GetCardholderById(args[3]);
+
+		Console.WriteLine("Gallagher cardholder-by-id lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherGetCardholderAccessGroups(string[] args)
+	{
+		// gallaghergetcardholderaccessgroups <baseUrl> <apiKey> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 4)
+		{
+			Console.Error.WriteLine("Gallagher cardholder access-groups lookup requires <baseUrl> <apiKey> <gallagherCardholderId>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 4);
+		var result = client.GetCardholderAccessGroups(args[3]);
+
+		Console.WriteLine("Gallagher cardholder access-groups lookup succeeded.");
+		Console.WriteLine(result);
+		return 0;
+	}
+
+	private static int RunGallagherResolveMembershipHref(string[] args)
+	{
+		// gallagherresolvemembershiphref <baseUrl> <apiKey> <accessGroupId> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]
+		if (args.Length < 5)
+		{
+			Console.Error.WriteLine("Gallagher membership href lookup requires <baseUrl> <apiKey> <accessGroupId> <gallagherCardholderId>.");
+			PrintUsage();
+			return 1;
+		}
+
+		var client = CreateGallagherClient(args, 1, 2, 5);
+		var result = client.ResolveAccessGroupMembershipHref(args[3], args[4]);
+
+		Console.WriteLine("Gallagher membership href lookup succeeded.");
 		Console.WriteLine(result);
 		return 0;
 	}
@@ -933,6 +1002,9 @@ internal static class Program
 		Console.WriteLine("  patchpublicxml <url> <xmlBody> [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetpdfid <baseUrl> <apiKey> <fieldName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetcardholderid <baseUrl> <apiKey> <externalCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetcardholderbyid <baseUrl> <apiKey> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallaghergetcardholderaccessgroups <baseUrl> <apiKey> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
+		Console.WriteLine("  gallagherresolvemembershiphref <baseUrl> <apiKey> <accessGroupId> <gallagherCardholderId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetaccessgroups <baseUrl> <apiKey> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghersearchaccessgroup <baseUrl> <apiKey> <groupName> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
 		Console.WriteLine("  gallaghergetaccessgroupcardholders <baseUrl> <apiKey> <accessGroupId> [thumbprint] [storeLocation] [storeName] [timeoutSeconds]");
@@ -960,6 +1032,9 @@ internal static class Program
 		Console.WriteLine("  patchpublicjson https://httpbin.org/patch \"{\"\"status\"\":\"\"Done\"\"}\" 100");
 		Console.WriteLine("  gallaghergetpdfid https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 ThirdPartyID");
 		Console.WriteLine("  gallaghergetcardholderid https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 IDCARD.12345");
+		Console.WriteLine("  gallaghergetcardholderbyid https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653");
+		Console.WriteLine("  gallaghergetcardholderaccessgroups https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653");
+		Console.WriteLine("  gallagherresolvemembershiphref https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 663 653");
 		Console.WriteLine("  gallaghersearchaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 6040-CHAMBERLAIN-B-11703");
 		Console.WriteLine("  gallagheraddaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 663 2026-04-01 2026-05-01");
 		Console.WriteLine("  gallagherremoveaccessgroup https://its-d-cdx-01.adf.bham.ac.uk:8904/api 2133-6820-E746-11CC-52D2-3417-CF15-2482 653 https://its-d-cdx-01.adf.bham.ac.uk:8904/api/cardholders/653/access_groups/d64caab7bc5e42e8a193bd0e8b166b0b");

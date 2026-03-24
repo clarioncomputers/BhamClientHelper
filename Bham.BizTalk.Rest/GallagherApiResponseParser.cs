@@ -12,6 +12,9 @@ namespace Bham.BizTalk.Rest
     /// </summary>
     public static class GallagherApiResponseParser
     {
+        /// <summary>
+        /// Parses Gallagher JSON text into a dictionary-based object graph.
+        /// </summary>
         public static IDictionary<string, object> DeserializeJsonObject(string json)
         {
             var parsed = ParseJson(json) as IDictionary<string, object>;
@@ -23,6 +26,9 @@ namespace Bham.BizTalk.Rest
             return parsed;
         }
 
+        /// <summary>
+        /// Returns the id from the first entity in a Gallagher collection response.
+        /// </summary>
         public static string GetFirstEntityId(string responseJson)
         {
             string id;
@@ -34,6 +40,9 @@ namespace Bham.BizTalk.Rest
             return id;
         }
 
+        /// <summary>
+        /// Tries to return the id from the first entity in a Gallagher collection response.
+        /// </summary>
         public static bool TryGetFirstEntityId(string responseJson, out string id)
         {
             return TryGetFirstMatchingValue(responseJson, delegate(IDictionary<string, object> item)
@@ -43,6 +52,9 @@ namespace Bham.BizTalk.Rest
             }, out id);
         }
 
+        /// <summary>
+        /// Returns the id of the entity whose name matches the supplied value.
+        /// </summary>
         public static string GetEntityIdByName(string responseJson, string name)
         {
             string id;
@@ -54,6 +66,9 @@ namespace Bham.BizTalk.Rest
             return id;
         }
 
+        /// <summary>
+        /// Tries to return the id of the entity whose name matches the supplied value.
+        /// </summary>
         public static bool TryGetEntityIdByName(string responseJson, string name, out string id)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
@@ -72,6 +87,9 @@ namespace Bham.BizTalk.Rest
             }, out id);
         }
 
+        /// <summary>
+        /// Returns the membership href for the specified cardholder from an access-group membership response.
+        /// </summary>
         public static string GetAccessGroupMembershipHrefForCardholder(string responseJson, string cardholderId)
         {
             string href;
@@ -83,6 +101,9 @@ namespace Bham.BizTalk.Rest
             return href;
         }
 
+        /// <summary>
+        /// Tries to return the membership href for the specified cardholder from an access-group membership response.
+        /// </summary>
         public static bool TryGetAccessGroupMembershipHrefForCardholder(string responseJson, string cardholderId, out string href)
         {
             if (string.IsNullOrWhiteSpace(cardholderId)) throw new ArgumentNullException(nameof(cardholderId));
@@ -116,6 +137,9 @@ namespace Bham.BizTalk.Rest
             }, out href);
         }
 
+        /// <summary>
+        /// Returns the membership href matching a cardholder name and optional date range.
+        /// </summary>
         public static string GetAccessGroupMembershipHrefByNameAndDates(string responseJson, string cardholderName, string fromDate = null, string untilDate = null)
         {
             string href;
@@ -127,6 +151,9 @@ namespace Bham.BizTalk.Rest
             return href;
         }
 
+        /// <summary>
+        /// Tries to return the membership href matching a cardholder name and optional date range.
+        /// </summary>
         public static bool TryGetAccessGroupMembershipHrefByNameAndDates(string responseJson, string cardholderName, string fromDate, string untilDate, out string href)
         {
             if (string.IsNullOrWhiteSpace(cardholderName)) throw new ArgumentNullException(nameof(cardholderName));

@@ -2,6 +2,9 @@ using System;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Regression tests for Gallagher client argument validation and PATCH body generation helpers.
+    /// </summary>
     internal static class GallagherApiClientTests
     {
         public static void BuildQuotedQueryValue_WrapsAndTrimsValue()

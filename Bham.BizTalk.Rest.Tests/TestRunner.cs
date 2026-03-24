@@ -2,8 +2,14 @@ using System;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Minimal in-project test runner that executes the lightweight regression tests without an external test host.
+    /// </summary>
     public static class TestRunner
     {
+        /// <summary>
+        /// Executes all registered regression tests and throws if any individual test fails.
+        /// </summary>
         public static void RunAll()
         {
             Run(nameof(BizTalkRestClientTests.BuildUrl_AppendsEncodedQueryParameters), BizTalkRestClientTests.BuildUrl_AppendsEncodedQueryParameters);

@@ -5,6 +5,9 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Bham.BizTalk.Rest
 {
+    /// <summary>
+    /// Holds the API key, certificate, timeout, and logger settings used by BizTalk REST calls.
+    /// </summary>
     public sealed class BizTalkRestClientSettings
     {
         public string ApiKeyHeaderName { get; set; }
@@ -30,6 +33,9 @@ namespace Bham.BizTalk.Rest
     {
         private readonly BizTalkRestClientSettings _settings;
 
+        /// <summary>
+        /// Creates a REST client from a settings object containing authentication, certificate, and timeout values.
+        /// </summary>
         public BizTalkRestClient(BizTalkRestClientSettings settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
@@ -39,6 +45,9 @@ namespace Bham.BizTalk.Rest
             if (_settings.TimeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(settings.TimeoutSeconds));
         }
 
+        /// <summary>
+        /// Sends a GET request and returns the response body as JSON text.
+        /// </summary>
         public string GetJson(string baseUrl, IDictionary<string, string> queryParameters = null)
         {
             var url = BuildUrl(baseUrl, queryParameters);
@@ -54,6 +63,9 @@ namespace Bham.BizTalk.Rest
                 _settings.Logger);
         }
 
+        /// <summary>
+        /// Sends a GET request and returns the response body as XML text.
+        /// </summary>
         public string GetXml(string baseUrl, IDictionary<string, string> queryParameters = null)
         {
             var url = BuildUrl(baseUrl, queryParameters);
@@ -69,6 +81,9 @@ namespace Bham.BizTalk.Rest
                 _settings.Logger);
         }
 
+        /// <summary>
+        /// Sends a PATCH request with a JSON payload and returns the response body.
+        /// </summary>
         public string PatchJson(string url, string jsonBody)
         {
             return PatchClient.PatchWithClientCertAndApiKey(
@@ -85,6 +100,9 @@ namespace Bham.BizTalk.Rest
                 _settings.Logger);
         }
 
+        /// <summary>
+        /// Sends a PATCH request with an XML payload and returns the response body.
+        /// </summary>
         public string PatchXml(string url, string xmlBody)
         {
             return PatchClient.PatchWithClientCertAndApiKey(
@@ -101,6 +119,9 @@ namespace Bham.BizTalk.Rest
                 _settings.Logger);
         }
 
+        /// <summary>
+        /// Builds a URL with escaped query-string parameters appended.
+        /// </summary>
         public static string BuildUrl(string baseUrl, IDictionary<string, string> queryParameters)
         {
             if (string.IsNullOrWhiteSpace(baseUrl)) throw new ArgumentNullException(nameof(baseUrl));

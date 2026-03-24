@@ -2,6 +2,9 @@ using System;
 
 namespace Bham.BizTalk.Rest
 {
+    /// <summary>
+    /// Severity levels used by the optional BizTalk REST logger callback.
+    /// </summary>
     public enum BizTalkRestLogLevel
     {
         Debug = 0,
@@ -10,6 +13,9 @@ namespace Bham.BizTalk.Rest
         Error = 3
     }
 
+    /// <summary>
+    /// Represents one diagnostic event emitted by the REST helper library.
+    /// </summary>
     public sealed class BizTalkRestLogEntry
     {
         public DateTime TimestampUtc { get; set; }
@@ -27,8 +33,14 @@ namespace Bham.BizTalk.Rest
         public Exception Exception { get; set; }
     }
 
+    /// <summary>
+    /// Exception thrown when a REST call fails and HTTP context needs to be preserved.
+    /// </summary>
     public sealed class BizTalkRestClientException : Exception
     {
+        /// <summary>
+        /// Creates an exception containing the REST operation, URL, status code, and response body.
+        /// </summary>
         public BizTalkRestClientException(
             string operation,
             string url,

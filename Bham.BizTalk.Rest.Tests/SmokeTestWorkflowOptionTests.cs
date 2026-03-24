@@ -3,6 +3,9 @@ using System.IO;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Regression tests for workflow option parsing, alias handling, and default value normalization.
+    /// </summary>
     internal static class SmokeTestWorkflowOptionTests
     {
         public static void Validate_BuildsPdfFieldKeyFromPdfFieldId()

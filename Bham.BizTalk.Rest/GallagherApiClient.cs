@@ -13,11 +13,17 @@ namespace Bham.BizTalk.Rest
         private readonly string _baseUrl;
         private readonly BizTalkRestClient _client;
 
+        /// <summary>
+        /// Creates a Gallagher client from a base URL and REST client settings.
+        /// </summary>
         public GallagherApiClient(string baseUrl, BizTalkRestClientSettings settings)
             : this(baseUrl, CreateClient(settings))
         {
         }
 
+        /// <summary>
+        /// Creates a Gallagher client from a base URL and an already configured REST client.
+        /// </summary>
         public GallagherApiClient(string baseUrl, BizTalkRestClient client)
         {
             if (client == null) throw new ArgumentNullException(nameof(client));
@@ -28,6 +34,9 @@ namespace Bham.BizTalk.Rest
             _client = client;
         }
 
+        /// <summary>
+        /// Gets Gallagher personal data fields filtered by field name.
+        /// </summary>
         public string GetPersonalDataFieldsByName(string fieldName)
         {
             return _client.GetJson(
@@ -38,17 +47,26 @@ namespace Bham.BizTalk.Rest
                 });
         }
 
+        /// <summary>
+        /// Gets all Gallagher personal data fields.
+        /// </summary>
         public string GetPersonalDataFields()
         {
             return _client.GetJson(CombineUrl("personal_data_fields"));
         }
 
+        /// <summary>
+        /// Gets one Gallagher personal data field by id.
+        /// </summary>
         public string GetPersonalDataFieldById(string fieldId)
         {
             if (string.IsNullOrWhiteSpace(fieldId)) throw new ArgumentNullException(nameof(fieldId));
             return _client.GetJson(CombineUrl("personal_data_fields/" + EncodePathSegment(fieldId)));
         }
 
+        /// <summary>
+        /// Searches Gallagher cardholders by Personal Data Field value.
+        /// </summary>
         public string GetCardholdersByPdfValue(string cardholderId, string pdfFieldKey = "pdf_629")
         {
             if (string.IsNullOrWhiteSpace(pdfFieldKey)) throw new ArgumentNullException(nameof(pdfFieldKey));
@@ -61,28 +79,43 @@ namespace Bham.BizTalk.Rest
                 });
         }
 
+        /// <summary>
+        /// Gets all Gallagher cardholders.
+        /// </summary>
         public string GetCardholders()
         {
             return _client.GetJson(CombineUrl("cardholders"));
         }
 
+        /// <summary>
+        /// Gets one Gallagher cardholder by Gallagher's own id.
+        /// </summary>
         public string GetCardholderById(string cardholderId)
         {
             if (string.IsNullOrWhiteSpace(cardholderId)) throw new ArgumentNullException(nameof(cardholderId));
             return _client.GetJson(CombineUrl("cardholders/" + EncodePathSegment(cardholderId)));
         }
 
+        /// <summary>
+        /// Gets all Gallagher access groups.
+        /// </summary>
         public string GetAccessGroups()
         {
             return _client.GetJson(CombineUrl("access_groups"));
         }
 
+        /// <summary>
+        /// Gets one Gallagher access group by id.
+        /// </summary>
         public string GetAccessGroupById(string accessGroupId)
         {
             if (string.IsNullOrWhiteSpace(accessGroupId)) throw new ArgumentNullException(nameof(accessGroupId));
             return _client.GetJson(CombineUrl("access_groups/" + EncodePathSegment(accessGroupId)));
         }
 
+        /// <summary>
+        /// Searches Gallagher access groups by name.
+        /// </summary>
         public string FindAccessGroupsByName(string accessGroupName)
         {
             return _client.GetJson(
@@ -93,53 +126,83 @@ namespace Bham.BizTalk.Rest
                 });
         }
 
+        /// <summary>
+        /// Gets the cardholders assigned to a Gallagher access group.
+        /// </summary>
         public string GetAccessGroupCardholders(string accessGroupId)
         {
             if (string.IsNullOrWhiteSpace(accessGroupId)) throw new ArgumentNullException(nameof(accessGroupId));
             return _client.GetJson(CombineUrl("access_groups/" + EncodePathSegment(accessGroupId) + "/cardholders"));
         }
 
+        /// <summary>
+        /// Gets the access groups assigned to a Gallagher cardholder.
+        /// </summary>
         public string GetCardholderAccessGroups(string cardholderId)
         {
             if (string.IsNullOrWhiteSpace(cardholderId)) throw new ArgumentNullException(nameof(cardholderId));
             return _client.GetJson(CombineUrl("cardholders/" + EncodePathSegment(cardholderId) + "/access_groups"));
         }
 
+        /// <summary>
+        /// Resolves a personal data field name to its Gallagher id.
+        /// </summary>
         public string ResolvePersonalDataFieldId(string fieldName)
         {
             return GallagherApiResponseParser.GetEntityIdByName(GetPersonalDataFieldsByName(fieldName), fieldName);
         }
 
+        /// <summary>
+        /// Alias for resolving a Personal Data Field id used as a PDF field.
+        /// </summary>
         public string ResolvePdfFieldId(string fieldName)
         {
             return ResolvePersonalDataFieldId(fieldName);
         }
 
+        /// <summary>
+        /// Resolves Gallagher's cardholder id by searching a Personal Data Field value.
+        /// </summary>
         public string ResolveCardholderIdByPdfValue(string cardholderId, string pdfFieldKey = "pdf_629")
         {
             return GallagherApiResponseParser.GetFirstEntityId(GetCardholdersByPdfValue(cardholderId, pdfFieldKey));
         }
 
+        /// <summary>
+        /// Alias for resolving Gallagher's cardholder id from an external cardholder id value.
+        /// </summary>
         public string ResolveGallagherCardholderId(string cardholderId, string pdfFieldKey = "pdf_629")
         {
             return ResolveCardholderIdByPdfValue(cardholderId, pdfFieldKey);
         }
 
+        /// <summary>
+        /// Resolves a Gallagher access group name to its id.
+        /// </summary>
         public string ResolveAccessGroupIdByName(string accessGroupName)
         {
             return GallagherApiResponseParser.GetEntityIdByName(FindAccessGroupsByName(accessGroupName), accessGroupName);
         }
 
+        /// <summary>
+        /// Alias for searching Gallagher access groups by name.
+        /// </summary>
         public string SearchAccessGroupsByName(string accessGroupName)
         {
             return FindAccessGroupsByName(accessGroupName);
         }
 
+        /// <summary>
+        /// Resolves the membership href linking a cardholder to an access group.
+        /// </summary>
         public string ResolveAccessGroupMembershipHref(string accessGroupId, string cardholderId)
         {
             return GallagherApiResponseParser.GetAccessGroupMembershipHrefForCardholder(GetAccessGroupCardholders(accessGroupId), cardholderId);
         }
 
+        /// <summary>
+        /// Adds an access group membership to a cardholder for the supplied date range.
+        /// </summary>
         public string AddAccessGroupToCardholder(string cardholderId, string accessGroupId, string fromDate, string untilDate)
         {
             var url = CombineUrl("cardholders/" + EncodePathSegment(cardholderId));
@@ -147,6 +210,9 @@ namespace Bham.BizTalk.Rest
             return _client.PatchJson(url, body);
         }
 
+        /// <summary>
+        /// Removes an access group membership from a cardholder using the membership href.
+        /// </summary>
         public string RemoveAccessGroupFromCardholder(string cardholderId, string membershipHref)
         {
             var url = CombineUrl("cardholders/" + EncodePathSegment(cardholderId));
@@ -154,11 +220,17 @@ namespace Bham.BizTalk.Rest
             return _client.PatchJson(url, body);
         }
 
+        /// <summary>
+        /// Alias for removing an access group membership from a cardholder.
+        /// </summary>
         public string RemoveCardholderFromAccessGroup(string cardholderId, string membershipHref)
         {
             return RemoveAccessGroupFromCardholder(cardholderId, membershipHref);
         }
 
+        /// <summary>
+        /// Updates the dates on an existing access group membership.
+        /// </summary>
         public string UpdateAccessGroupForCardholder(string cardholderId, string membershipHref, string fromUtc, string untilUtc)
         {
             var url = CombineUrl("cardholders/" + EncodePathSegment(cardholderId));
@@ -166,17 +238,26 @@ namespace Bham.BizTalk.Rest
             return _client.PatchJson(url, body);
         }
 
+        /// <summary>
+        /// Alias for updating the dates on an existing access group membership.
+        /// </summary>
         public string UpdateCardholderAccessGroup(string cardholderId, string membershipHref, string fromUtc, string untilUtc)
         {
             return UpdateAccessGroupForCardholder(cardholderId, membershipHref, fromUtc, untilUtc);
         }
 
+        /// <summary>
+        /// Wraps a query value in quotes to match Gallagher's expected filter format.
+        /// </summary>
         public static string BuildQuotedQueryValue(string value)
         {
             if (string.IsNullOrWhiteSpace(value)) throw new ArgumentNullException(nameof(value));
             return "\"" + value.Trim() + "\"";
         }
 
+        /// <summary>
+        /// Builds the JSON PATCH body used to add an access group membership.
+        /// </summary>
         public static string BuildAddAccessGroupPatchBody(string accessGroupHref, string fromDate, string untilDate)
         {
             ValidateAbsoluteHttpUrl(accessGroupHref, nameof(accessGroupHref));
@@ -193,6 +274,9 @@ namespace Bham.BizTalk.Rest
                 + "}";
         }
 
+        /// <summary>
+        /// Builds the JSON PATCH body used to remove an access group membership.
+        /// </summary>
         public static string BuildRemoveAccessGroupPatchBody(string membershipHref)
         {
             ValidateAbsoluteHttpUrl(membershipHref, nameof(membershipHref));
@@ -205,6 +289,9 @@ namespace Bham.BizTalk.Rest
                 + "}";
         }
 
+        /// <summary>
+        /// Builds the JSON PATCH body used to update an existing access group membership.
+        /// </summary>
         public static string BuildUpdateAccessGroupPatchBody(string membershipHref, string fromUtc, string untilUtc)
         {
             ValidateAbsoluteHttpUrl(membershipHref, nameof(membershipHref));

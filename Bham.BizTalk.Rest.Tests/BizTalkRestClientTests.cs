@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Regression tests for URL construction and basic client argument validation.
+    /// </summary>
     internal static class BizTalkRestClientTests
     {
         public static void BuildUrl_AppendsEncodedQueryParameters()

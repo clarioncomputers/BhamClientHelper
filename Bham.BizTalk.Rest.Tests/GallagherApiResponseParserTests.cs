@@ -2,6 +2,9 @@ using System;
 
 namespace Bham.BizTalk.Rest.Tests
 {
+    /// <summary>
+    /// Regression tests for extracting ids and membership hrefs from Gallagher JSON responses.
+    /// </summary>
     internal static class GallagherApiResponseParserTests
     {
         public static void GetFirstEntityId_FindsFirstNestedId()

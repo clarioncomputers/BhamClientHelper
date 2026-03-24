@@ -5,6 +5,9 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Bham.BizTalk.Rest
 {
+    /// <summary>
+    /// Holds the configuration values required to run common Gallagher workflow operations.
+    /// </summary>
     public sealed class GallagherWorkflowOptions
     {
         public string BaseUrl { get; set; }
@@ -25,8 +28,14 @@ namespace Bham.BizTalk.Rest
         public int TimeoutSeconds { get; set; } = 100;
     }
 
+    /// <summary>
+    /// Loads, applies, and validates workflow configuration for Gallagher smoke-test and helper flows.
+    /// </summary>
     public static class GallagherWorkflowOptionsParser
     {
+        /// <summary>
+        /// Loads Gallagher workflow options from a JSON configuration file.
+        /// </summary>
         public static GallagherWorkflowOptions LoadFromJsonFile(string configPath)
         {
             if (string.IsNullOrWhiteSpace(configPath))
@@ -42,6 +51,9 @@ namespace Bham.BizTalk.Rest
             return options;
         }
 
+        /// <summary>
+        /// Applies string-based named arguments onto an existing workflow options object.
+        /// </summary>
         public static void ApplyNamedArguments(GallagherWorkflowOptions options, IDictionary<string, string> namedArguments)
         {
             if (options == null) throw new ArgumentNullException(nameof(options));
@@ -66,6 +78,9 @@ namespace Bham.BizTalk.Rest
             ApplyValue(options, "timeoutSeconds", GetNamedArgument(namedArguments, "timeoutSeconds"));
         }
 
+        /// <summary>
+        /// Applies dictionary values onto an existing workflow options object.
+        /// </summary>
         public static void ApplyDictionary(GallagherWorkflowOptions options, IDictionary<string, object> values)
         {
             if (options == null) throw new ArgumentNullException(nameof(options));
@@ -77,6 +92,9 @@ namespace Bham.BizTalk.Rest
             }
         }
 
+        /// <summary>
+        /// Applies one key/value pair onto an existing workflow options object.
+        /// </summary>
         public static void ApplyValue(GallagherWorkflowOptions options, string key, string value)
         {
             if (options == null || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
@@ -140,6 +158,9 @@ namespace Bham.BizTalk.Rest
             }
         }
 
+        /// <summary>
+        /// Validates the workflow options and fills in default Gallagher values where needed.
+        /// </summary>
         public static void Validate(GallagherWorkflowOptions options)
         {
             if (options == null) throw new ArgumentNullException(nameof(options));
