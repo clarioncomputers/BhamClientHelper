@@ -1,0 +1,472 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using Bham.BizTalk.Rest;
+using NLog;
+
+// Copy this class into your BizTalk helper project and adjust namespace/sink as needed.
+// This file is reference-only and is not compiled into the main library.
+// NLog methods require the NLog package in the target project.
+// log4net methods require the log4net package in the target project.
+public static class GallagherLoggingHelper
+{
+    private const string EventSourceName = "Bham.BizTalk.Rest";
+    private const string EventLogName = "Application";
+    private const string NLogLoggerName = "Bham.BizTalk.Rest.Gallagher";
+    private const string Log4NetLoggerName = "Bham.BizTalk.Rest.Gallagher";
+
+    public static string GetCardholdersWithLogging(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.GetCardholders(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLogger("GetCardholders"));
+    }
+
+    public static string ResolveGallagherCardholderIdWithLogging(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string externalCardholderId,
+        string pdfFieldKey,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.ResolveGallagherCardholderId(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            externalCardholderId,
+            pdfFieldKey,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLogger("ResolveGallagherCardholderId"));
+    }
+
+    public static string AddAccessGroupToCardholderWithLogging(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string cardholderId,
+        string accessGroupId,
+        string fromDate,
+        string untilDate,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.AddAccessGroupToCardholder(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            cardholderId,
+            accessGroupId,
+            fromDate,
+            untilDate,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLogger("AddAccessGroupToCardholder"));
+    }
+
+    public static string GetCardholdersWithEventLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.GetCardholders(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateEventLogLogger("GetCardholders"));
+    }
+
+    public static string ResolveGallagherCardholderIdWithEventLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string externalCardholderId,
+        string pdfFieldKey,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.ResolveGallagherCardholderId(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            externalCardholderId,
+            pdfFieldKey,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateEventLogLogger("ResolveGallagherCardholderId"));
+    }
+
+    public static string AddAccessGroupToCardholderWithEventLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string cardholderId,
+        string accessGroupId,
+        string fromDate,
+        string untilDate,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.AddAccessGroupToCardholder(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            cardholderId,
+            accessGroupId,
+            fromDate,
+            untilDate,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateEventLogLogger("AddAccessGroupToCardholder"));
+    }
+
+    public static string GetCardholdersWithNLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.GetCardholders(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateNLogLogger("GetCardholders"));
+    }
+
+    public static string ResolveGallagherCardholderIdWithNLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string externalCardholderId,
+        string pdfFieldKey,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.ResolveGallagherCardholderId(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            externalCardholderId,
+            pdfFieldKey,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateNLogLogger("ResolveGallagherCardholderId"));
+    }
+
+    public static string AddAccessGroupToCardholderWithNLog(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string cardholderId,
+        string accessGroupId,
+        string fromDate,
+        string untilDate,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.AddAccessGroupToCardholder(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            cardholderId,
+            accessGroupId,
+            fromDate,
+            untilDate,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateNLogLogger("AddAccessGroupToCardholder"));
+    }
+
+    public static string GetCardholdersWithLog4Net(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.GetCardholders(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLog4NetLogger("GetCardholders"));
+    }
+
+    public static string ResolveGallagherCardholderIdWithLog4Net(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string externalCardholderId,
+        string pdfFieldKey,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.ResolveGallagherCardholderId(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            externalCardholderId,
+            pdfFieldKey,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLog4NetLogger("ResolveGallagherCardholderId"));
+    }
+
+    public static string AddAccessGroupToCardholderWithLog4Net(
+        string baseUrl,
+        string apiKeyHeaderName,
+        string apiKeyHeaderValue,
+        string cardholderId,
+        string accessGroupId,
+        string fromDate,
+        string untilDate,
+        string certThumbprint = null,
+        int timeoutSeconds = 100)
+    {
+        return GallagherApiFacade.AddAccessGroupToCardholder(
+            baseUrl,
+            apiKeyHeaderName,
+            apiKeyHeaderValue,
+            cardholderId,
+            accessGroupId,
+            fromDate,
+            untilDate,
+            certThumbprint,
+            StoreLocation.LocalMachine,
+            StoreName.My,
+            timeoutSeconds,
+            CreateLog4NetLogger("AddAccessGroupToCardholder"));
+    }
+
+    private static Action<BizTalkRestLogEntry> CreateLogger(string context)
+    {
+        return entry =>
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var line = BuildLine(entry, context);
+
+            // Default sink for BizTalk host processes. Replace with Event Log or SIEM forwarding if preferred.
+            Trace.WriteLine(line, "Bham.BizTalk.Rest");
+
+            if (entry.Exception != null)
+            {
+                Trace.WriteLine(entry.Exception.ToString(), "Bham.BizTalk.Rest");
+            }
+        };
+    }
+
+    private static Action<BizTalkRestLogEntry> CreateEventLogLogger(string context)
+    {
+        return entry =>
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var line = BuildLine(entry, context);
+
+            if (!WriteEventLogSafe(line, MapToEventLogEntryType(entry.Level)))
+            {
+                // Fallback when source registration/write permissions are unavailable.
+                Trace.WriteLine(line, EventSourceName);
+            }
+
+            if (entry.Exception != null)
+            {
+                var exceptionText = entry.Exception.ToString();
+                if (!WriteEventLogSafe(exceptionText, EventLogEntryType.Error))
+                {
+                    Trace.WriteLine(exceptionText, EventSourceName);
+                }
+            }
+        };
+    }
+
+    private static Action<BizTalkRestLogEntry> CreateNLogLogger(string context)
+    {
+        var logger = NLog.LogManager.GetLogger(NLogLoggerName);
+
+        return entry =>
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var evt = new NLog.LogEventInfo
+            {
+                LoggerName = logger.Name,
+                Level = MapToNLogLevel(entry.Level),
+                Message = BuildLine(entry, context),
+                Exception = entry.Exception
+            };
+
+            evt.Properties["timestampUtc"] = entry.TimestampUtc;
+            evt.Properties["operation"] = entry.Operation ?? string.Empty;
+            evt.Properties["url"] = entry.Url ?? string.Empty;
+            evt.Properties["statusCode"] = entry.StatusCode.HasValue ? entry.StatusCode.Value : 0;
+            evt.Properties["context"] = context;
+
+            logger.Log(evt);
+        };
+    }
+
+    private static Action<BizTalkRestLogEntry> CreateLog4NetLogger(string context)
+    {
+        EnsureLog4NetConfigured();
+        var logger = log4net.LogManager.GetLogger(Log4NetLoggerName);
+
+        return entry =>
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var line = BuildLine(entry, context);
+            switch (entry.Level)
+            {
+                case BizTalkRestLogLevel.Debug:
+                    if (entry.Exception != null) logger.Debug(line, entry.Exception); else logger.Debug(line);
+                    break;
+                case BizTalkRestLogLevel.Warning:
+                    if (entry.Exception != null) logger.Warn(line, entry.Exception); else logger.Warn(line);
+                    break;
+                case BizTalkRestLogLevel.Error:
+                    if (entry.Exception != null) logger.Error(line, entry.Exception); else logger.Error(line);
+                    break;
+                default:
+                    if (entry.Exception != null) logger.Info(line, entry.Exception); else logger.Info(line);
+                    break;
+            }
+        };
+    }
+
+    private static void EnsureLog4NetConfigured()
+    {
+        var repository = log4net.LogManager.GetRepository();
+        if (repository.Configured)
+        {
+            return;
+        }
+
+        var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log4net.config");
+        if (File.Exists(configPath))
+        {
+            log4net.Config.XmlConfigurator.ConfigureAndWatch(repository, new FileInfo(configPath));
+            return;
+        }
+
+        log4net.Config.BasicConfigurator.Configure(repository);
+    }
+
+    private static string BuildLine(BizTalkRestLogEntry entry, string context)
+    {
+        var statusText = entry.StatusCode.HasValue ? entry.StatusCode.Value.ToString() : "-";
+        var urlText = string.IsNullOrWhiteSpace(entry.Url) ? "-" : entry.Url;
+        return string.Format(
+            "[{0:O}] [{1}] [{2}] [{3}] status={4} url={5} {6}",
+            entry.TimestampUtc,
+            entry.Level,
+            context,
+            entry.Operation ?? "n/a",
+            statusText,
+            urlText,
+            entry.Message ?? string.Empty);
+    }
+
+    private static bool WriteEventLogSafe(string message, EventLogEntryType entryType)
+    {
+        try
+        {
+            if (!EventLog.SourceExists(EventSourceName))
+            {
+                EventLog.CreateEventSource(EventSourceName, EventLogName);
+            }
+
+            EventLog.WriteEntry(EventSourceName, message ?? string.Empty, entryType);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static EventLogEntryType MapToEventLogEntryType(BizTalkRestLogLevel level)
+    {
+        switch (level)
+        {
+            case BizTalkRestLogLevel.Error:
+                return EventLogEntryType.Error;
+            case BizTalkRestLogLevel.Warning:
+                return EventLogEntryType.Warning;
+            default:
+                return EventLogEntryType.Information;
+        }
+    }
+
+    private static NLog.LogLevel MapToNLogLevel(BizTalkRestLogLevel level)
+    {
+        switch (level)
+        {
+            case BizTalkRestLogLevel.Debug:
+                return NLog.LogLevel.Debug;
+            case BizTalkRestLogLevel.Information:
+                return NLog.LogLevel.Info;
+            case BizTalkRestLogLevel.Warning:
+                return NLog.LogLevel.Warn;
+            case BizTalkRestLogLevel.Error:
+                return NLog.LogLevel.Error;
+            default:
+                return NLog.LogLevel.Info;
+        }
+    }
+}
